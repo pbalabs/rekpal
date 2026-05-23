@@ -1,0 +1,2144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Northwind ATS · with Recruitment Sidekick</title>
+<style>
+/* ---------- Reset & base ---------- */
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;background:#f7f8fa;color:#111827;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+a{color:inherit;text-decoration:none}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#d1d5db;border-radius:8px}
+::-webkit-scrollbar-thumb:hover{background:#9ca3af}
+
+/* ---------- App shell ---------- */
+.app{display:grid;grid-template-columns:228px 1fr;height:100vh;overflow:hidden}
+.sidebar{background:#0f172a;color:#cbd5e1;display:flex;flex-direction:column;padding:14px 0}
+.brand{display:flex;align-items:center;gap:10px;padding:6px 18px 18px}
+.brand-mark{width:28px;height:28px;border-radius:7px;background:linear-gradient(135deg,#2563eb,#06b6d4);display:grid;place-items:center;color:#fff;font-weight:800;font-size:13px}
+.brand-name{font-weight:700;color:#fff;font-size:14px;letter-spacing:.2px}
+.brand-sub{font-size:11px;color:#64748b;margin-top:1px}
+.nav{margin-top:6px}
+.nav-section{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:#475569;padding:14px 18px 6px}
+.nav a{display:flex;align-items:center;gap:11px;padding:8px 18px;color:#cbd5e1;font-size:13.5px;border-left:2px solid transparent}
+.nav a:hover{background:#111c34;color:#fff}
+.nav a.active{background:#111c34;color:#fff;border-left-color:#3b82f6}
+.nav .ico{width:16px;height:16px;display:inline-block;opacity:.85}
+.nav-foot{margin-top:auto;padding:14px 18px;border-top:1px solid #1e293b;font-size:11.5px;color:#64748b}
+.nav-foot strong{color:#cbd5e1;display:block;font-size:12.5px;font-weight:600}
+
+/* ---------- Top bar ---------- */
+.main{display:flex;flex-direction:column;min-width:0;background:#f7f8fa}
+.topbar{display:flex;align-items:center;gap:14px;padding:10px 22px;background:#fff;border-bottom:1px solid #e5e7eb;height:54px;flex-shrink:0}
+.search{flex:1;max-width:520px;display:flex;align-items:center;gap:8px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:6px 10px}
+.search input{flex:1;border:0;background:transparent;outline:0;font-size:13.5px}
+.topbar-spacer{flex:1}
+.top-btn{display:flex;align-items:center;gap:6px;padding:6px 10px;border-radius:7px;font-size:13px;color:#374151;border:1px solid transparent}
+.top-btn:hover{background:#f3f4f6}
+.sk-btn{background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff!important;font-weight:600;padding:7px 12px;border-radius:8px;font-size:13px;display:flex;align-items:center;gap:7px;box-shadow:0 1px 2px rgba(91,33,182,.25)}
+.sk-btn:hover{filter:brightness(1.07)}
+.sk-badge{background:rgba(255,255,255,.22);border-radius:10px;padding:1px 7px;font-size:11px;font-weight:700}
+.avatar{width:30px;height:30px;border-radius:50%;background:#dbeafe;color:#1e40af;display:grid;place-items:center;font-weight:600;font-size:12px}
+.bell{position:relative;padding:7px;border-radius:7px}
+.bell:hover{background:#f3f4f6}
+.bell-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;background:#ef4444;border:2px solid #fff;border-radius:50%}
+
+/* ---------- Page chrome ---------- */
+.page{flex:1;overflow:auto;padding:20px 26px 40px}
+.crumbs{font-size:12.5px;color:#6b7280;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.crumbs span{color:#9ca3af}
+.h1{font-size:22px;font-weight:700;letter-spacing:-.01em;margin:0 0 4px}
+.sub{color:#6b7280;font-size:13.5px;margin:0 0 18px}
+
+/* ---------- Job/Pipeline view ---------- */
+.job-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:18px}
+.job-meta{display:flex;gap:14px;font-size:12.5px;color:#6b7280;margin-top:6px}
+.job-meta b{color:#374151;font-weight:600}
+.pipeline{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;min-width:1000px}
+.stage{background:#f3f4f6;border-radius:10px;padding:10px;display:flex;flex-direction:column;gap:8px;min-height:300px}
+.stage-h{display:flex;justify-content:space-between;align-items:center;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#374151;font-weight:700;padding:2px 4px}
+.stage-count{background:#fff;border-radius:10px;padding:1px 8px;font-size:11.5px;color:#374151;font-weight:700}
+.cand{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:10px;cursor:pointer;transition:.12s}
+.cand:hover{border-color:#9ca3af;box-shadow:0 2px 6px rgba(15,23,42,.06);transform:translateY(-1px)}
+.cand-row{display:flex;align-items:center;gap:9px}
+.av{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-size:11.5px;font-weight:700;color:#fff;flex-shrink:0}
+.cand-name{font-weight:600;font-size:13px;color:#111827;line-height:1.25}
+.cand-meta{font-size:11.5px;color:#6b7280;margin-top:1px}
+.cand-foot{display:flex;justify-content:space-between;align-items:center;margin-top:9px;padding-top:8px;border-top:1px solid #f3f4f6;font-size:11px;color:#6b7280}
+.pill{display:inline-flex;align-items:center;gap:4px;padding:1px 7px;border-radius:9px;font-size:10.5px;font-weight:600}
+.pill-green{background:#d1fae5;color:#047857}
+.pill-amber{background:#fef3c7;color:#92400e}
+.pill-red{background:#fee2e2;color:#b91c1c}
+.pill-blue{background:#dbeafe;color:#1d4ed8}
+.pill-gray{background:#f3f4f6;color:#4b5563}
+.pill-purple{background:#ede9fe;color:#6d28d9}
+.alert-row{margin-top:8px;padding:6px 8px;border-radius:6px;font-size:11px;font-weight:600;display:flex;align-items:center;gap:6px}
+.alert-red{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+.alert-amber{background:#fffbeb;color:#92400e;border:1px solid #fde68a}
+
+/* ---------- Candidate detail ---------- */
+.cand-page{display:grid;grid-template-columns:280px 1fr;gap:22px}
+.cand-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px;height:fit-content;position:sticky;top:0}
+.cand-av-lg{width:64px;height:64px;border-radius:50%;display:grid;place-items:center;font-size:22px;font-weight:700;color:#fff;margin-bottom:10px}
+.cand-h{font-size:18px;font-weight:700;margin:0 0 2px}
+.cand-role{color:#6b7280;font-size:13px;margin-bottom:14px}
+.cand-info{display:flex;flex-direction:column;gap:9px;font-size:13px;border-top:1px solid #f3f4f6;padding-top:14px}
+.cand-info-row{display:flex;justify-content:space-between;gap:8px}
+.cand-info-row span{color:#6b7280}
+.cand-info-row b{font-weight:600;color:#111827;text-align:right}
+
+.tabs{display:flex;gap:2px;border-bottom:1px solid #e5e7eb;margin-bottom:16px}
+.tab{padding:10px 14px;font-size:13.5px;color:#6b7280;border-bottom:2px solid transparent;font-weight:500}
+.tab:hover{color:#111827}
+.tab.active{color:#111827;border-bottom-color:#2563eb;font-weight:600}
+
+.panel{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:18px;margin-bottom:14px}
+.panel-h{display:flex;justify-content:space-between;align-items:center;margin:-2px 0 12px}
+.panel-h h3{margin:0;font-size:15px;font-weight:700}
+.scorecard{border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:10px}
+.scorecard.missing{border:1px dashed #fca5a5;background:#fef2f2}
+.sc-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sc-round{font-size:12px;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+.sc-iv{font-weight:600;font-size:13.5px;margin-top:2px}
+.sc-iv-title{color:#6b7280;font-size:12px}
+.sc-rec{padding:3px 9px;border-radius:6px;font-size:12px;font-weight:700}
+.rec-strong-hire{background:#d1fae5;color:#065f46}
+.rec-hire{background:#dcfce7;color:#166534}
+.rec-lean-hire{background:#fef9c3;color:#854d0e}
+.rec-lean-no{background:#fed7aa;color:#9a3412}
+.rec-no-hire{background:#fee2e2;color:#991b1b}
+.rec-strong-no{background:#fecaca;color:#7f1d1d}
+.rec-missing{background:#fee2e2;color:#7f1d1d;border:1px dashed #fca5a5}
+.scores-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0;padding:10px;background:#f9fafb;border-radius:7px;font-size:12px}
+.scores-col{display:flex;flex-direction:column;gap:3px}
+.scores-col-h{font-size:10.5px;font-weight:700;color:#6b7280;text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px}
+.score-row{display:flex;justify-content:space-between}
+.score-row b{font-variant-numeric:tabular-nums}
+.sc-comment{font-size:13px;line-height:1.55;color:#374151;margin-top:8px;padding-top:10px;border-top:1px solid #f3f4f6;font-style:italic}
+.sc-comment::before{content:"❝ ";color:#9ca3af;font-style:normal}
+.sc-meta{display:flex;gap:14px;margin-top:8px;padding-top:8px;border-top:1px solid #f3f4f6;font-size:11.5px;color:#6b7280}
+
+.sc-row-flag{margin-top:10px;padding:8px 10px;background:#fef9c3;border-left:3px solid #ca8a04;border-radius:5px;font-size:12px;color:#713f12;display:flex;gap:8px;align-items:flex-start}
+
+/* ---------- Sidekick drawer ---------- */
+.sk-overlay{position:fixed;inset:0;background:rgba(15,23,42,.35);opacity:0;pointer-events:none;transition:.18s;z-index:80}
+.sk-overlay.open{opacity:1;pointer-events:auto}
+.sk-drawer{position:fixed;top:0;right:0;bottom:0;width:480px;background:#fff;box-shadow:-12px 0 30px rgba(15,23,42,.18);transform:translateX(100%);transition:transform .22s ease;z-index:90;display:flex;flex-direction:column}
+.sk-drawer.open{transform:translateX(0)}
+.sk-head{padding:14px 18px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff}
+.sk-head-l{display:flex;align-items:center;gap:10px}
+.sk-mark{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.18);display:grid;place-items:center;font-weight:800;font-size:13px}
+.sk-title{font-weight:700;font-size:14px}
+.sk-sub{font-size:11.5px;opacity:.78;margin-top:1px}
+.sk-x{padding:5px;border-radius:6px;color:#fff;font-size:18px;line-height:1}
+.sk-x:hover{background:rgba(255,255,255,.15)}
+.sk-tabs{display:flex;background:#fff;border-bottom:1px solid #e5e7eb;padding:0 8px}
+.sk-tab{flex:1;padding:11px 8px;font-size:13px;color:#6b7280;border-bottom:2px solid transparent;font-weight:500;text-align:center;position:relative}
+.sk-tab:hover{color:#111827}
+.sk-tab.active{color:#7c3aed;border-bottom-color:#7c3aed;font-weight:600}
+.sk-tab-count{display:inline-block;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:9px;padding:1px 6px;margin-left:4px;vertical-align:1px}
+.sk-body{flex:1;overflow:auto;padding:14px 16px;background:#f9fafb}
+
+/* Sidekick — Nudges */
+.nudge{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:13px;margin-bottom:10px}
+.nudge.crit{border-left:4px solid #ef4444}
+.nudge.warn{border-left:4px solid #f59e0b}
+.nudge.ok{border-left:4px solid #10b981}
+.nudge-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:6px}
+.nudge-cand{font-weight:600;font-size:13.5px}
+.nudge-iv{font-size:12px;color:#6b7280;margin-top:1px}
+.nudge-tier{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;padding:2px 7px;border-radius:6px}
+.tier-crit{background:#fee2e2;color:#991b1b}
+.tier-warn{background:#fef3c7;color:#92400e}
+.tier-ok{background:#d1fae5;color:#065f46}
+.nudge-int{display:flex;align-items:center;gap:8px;margin-top:8px;padding:7px 9px;background:#f9fafb;border-radius:6px}
+.nudge-int-name{font-size:12.5px;font-weight:600}
+.nudge-int-meta{font-size:11px;color:#6b7280}
+.nudge-dm{margin-top:10px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:7px;padding:10px;font-size:12.5px;line-height:1.5;color:#4c1d95;position:relative}
+.nudge-dm-h{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:#7c3aed;margin-bottom:5px;display:flex;align-items:center;gap:5px}
+.nudge-actions{display:flex;gap:7px;margin-top:11px}
+.btn{padding:7px 12px;border-radius:7px;font-size:12.5px;font-weight:600;border:1px solid #e5e7eb;background:#fff;color:#374151}
+.btn:hover{background:#f9fafb}
+.btn-pri{background:#7c3aed;color:#fff;border-color:#7c3aed}
+.btn-pri:hover{background:#6d28d9}
+.btn-thumb{font-size:14px;padding:6px 10px}
+.nudge-flags{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+
+/* Sidekick — Calibration */
+.cal-cand{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px;cursor:pointer}
+.cal-cand:hover{border-color:#a78bfa}
+.cal-cand.disagree{border-left:4px solid #f59e0b}
+.cal-cand.consensus{border-left:4px solid #10b981}
+.cal-cand.blocked{border-left:4px solid #ef4444;background:#fef2f2}
+.cal-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.cal-name{font-weight:700;font-size:14px}
+.cal-role{font-size:12px;color:#6b7280}
+.cal-status{font-size:10.5px;font-weight:700;text-transform:uppercase;padding:3px 7px;border-radius:5px;letter-spacing:.04em}
+.cal-scores{display:flex;gap:14px;margin:9px 0;padding:8px 10px;background:#f9fafb;border-radius:6px;font-size:12px;font-variant-numeric:tabular-nums}
+.cal-scores div{display:flex;flex-direction:column;align-items:center}
+.cal-scores label{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280}
+.cal-scores b{font-size:14px;font-weight:700;margin-top:1px}
+.cal-scores b.warn{color:#b45309}
+.cal-scores b.ok{color:#047857}
+.cal-rec-mix{font-size:11.5px;color:#374151;margin-top:4px}
+.cal-disagree{margin-top:9px;padding:8px 10px;background:#fffbeb;border-left:3px solid #f59e0b;border-radius:5px;font-size:12px;color:#78350f}
+.cal-disagree b{display:block;margin-bottom:2px;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#92400e}
+.cal-disc{margin-top:9px;padding:9px 11px;background:#f5f3ff;border-radius:6px;font-size:12.5px;line-height:1.5;color:#4c1d95}
+.cal-disc b{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#7c3aed;display:block;margin-bottom:3px}
+
+/* Sidekick — Cohort */
+.coh-section{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:14px;margin-bottom:12px}
+.coh-h{font-size:13px;font-weight:700;margin:0 0 10px;display:flex;align-items:center;gap:8px}
+.coh-h .pill{font-size:10px;padding:1px 6px}
+.coh-row{display:grid;grid-template-columns:18px 1fr 40px 40px 40px 50px;gap:8px;align-items:center;padding:7px 0;border-top:1px solid #f3f4f6;font-size:12.5px;font-variant-numeric:tabular-nums}
+.coh-row:first-of-type{border-top:0}
+.coh-rank{color:#9ca3af;font-weight:700;text-align:center;font-size:11px}
+.coh-name{display:flex;align-items:center;gap:7px;min-width:0}
+.coh-name b{font-weight:600;font-size:12.5px;color:#111827;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.coh-name .av{width:22px;height:22px;font-size:10px}
+.coh-score{text-align:right;color:#374151}
+.coh-score b{font-weight:700;color:#111827}
+.coh-pat{margin-top:10px;padding:9px 11px;background:#f0f9ff;border-left:3px solid #0284c7;border-radius:5px;font-size:12px;color:#075985;line-height:1.5}
+.coh-pat b{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#0369a1;margin-bottom:2px}
+.coh-bias{margin-top:10px;padding:9px 11px;background:#fef2f2;border-left:3px solid #dc2626;border-radius:5px;font-size:12px;color:#7f1d1d;line-height:1.5}
+.coh-bias b{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#b91c1c;margin-bottom:2px}
+.coh-bias-quote{margin-top:5px;padding:5px 7px;background:#fff;border:1px solid #fecaca;border-radius:4px;font-style:italic;font-size:11.5px;color:#374151}
+mark{background:#fef08a;padding:0 3px;border-radius:2px;color:#713f12;font-weight:600}
+
+/* Slack mock modal */
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:200}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;width:520px;max-width:95vw;overflow:hidden;box-shadow:0 20px 50px rgba(15,23,42,.4);animation:pop .18s ease}
+@keyframes pop{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.slack-h{background:#3f0e40;color:#fff;padding:11px 16px;display:flex;align-items:center;gap:10px;font-size:13.5px;font-weight:600}
+.slack-mark{width:22px;height:22px;background:#fff;border-radius:5px;display:grid;place-items:center;color:#3f0e40;font-weight:800;font-size:11px}
+.slack-body{padding:18px 20px;background:#fff}
+.slack-msg{display:flex;gap:11px;align-items:flex-start}
+.slack-av{width:36px;height:36px;border-radius:6px;background:#7c3aed;color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex-shrink:0}
+.slack-msg-body{flex:1}
+.slack-name{font-weight:700;font-size:14px;margin-bottom:1px}
+.slack-name .app-tag{display:inline-block;background:#e9e9eb;color:#616061;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:2px}
+.slack-time{color:#616061;font-size:11px;margin-left:5px;font-weight:400}
+.slack-text{font-size:14px;line-height:1.5;color:#1d1c1d;margin-top:2px}
+.slack-link{color:#1264a3;text-decoration:underline;cursor:pointer}
+.slack-card{margin-top:9px;border-left:3px solid #3b82f6;background:#f8fafc;padding:10px 12px;border-radius:0 6px 6px 0;font-size:13px}
+.slack-card-h{font-weight:700;font-size:12px;color:#374151;margin-bottom:3px}
+.slack-card-meta{font-size:11.5px;color:#6b7280;margin-top:4px}
+.modal-foot{padding:12px 18px;background:#fafafa;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;font-size:12.5px;color:#6b7280}
+.modal-foot .btn{padding:6px 12px}
+
+/* Toast */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:10px 16px;border-radius:9px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:.22s;z-index:300;display:flex;align-items:center;gap:9px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .check{color:#34d399;font-weight:700}
+
+/* Helpers */
+.row{display:flex;align-items:center;gap:8px}
+.gap{flex:1}
+.muted{color:#6b7280}
+.small{font-size:11.5px}
+.empty{color:#9ca3af;font-style:italic;font-size:12.5px;padding:14px;text-align:center}
+.sk-banner{background:linear-gradient(135deg,#f5f3ff,#ede9fe);border:1px solid #ddd6fe;border-radius:9px;padding:12px 14px;margin-bottom:12px;font-size:12.5px;color:#5b21b6;display:flex;gap:10px;align-items:flex-start;line-height:1.5}
+.sk-banner b{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#7c3aed;margin-bottom:2px}
+
+.ctx-banner{background:#eff6ff;border:1px solid #bfdbfe;border-radius:9px;padding:11px 14px;margin-bottom:14px;font-size:13px;color:#1e3a8a;display:flex;gap:10px;align-items:center}
+.ctx-banner .pill{font-size:10.5px}
+
+/* Activity feed */
+.act-row{display:flex;gap:11px;padding:10px 0;border-top:1px solid #f3f4f6;font-size:13px}
+.act-row:first-child{border-top:0}
+.act-dot{width:9px;height:9px;border-radius:50%;background:#9ca3af;margin-top:6px;flex-shrink:0}
+.act-dot.green{background:#10b981}
+.act-dot.amber{background:#f59e0b}
+.act-dot.red{background:#ef4444}
+.act-dot.purple{background:#7c3aed}
+/* === V2 ADD: Slack interviewer view + Quick scorecard === */
+.slkv{position:fixed;inset:0;background:#fff;z-index:120;display:none;flex-direction:column}
+.slkv.open{display:flex}
+.slkv-app{display:grid;grid-template-columns:240px 1fr;height:100%}
+.slkv-side{background:#3f0e40;color:#cdb4d2;padding:0;display:flex;flex-direction:column;overflow:auto}
+.slkv-ws{padding:12px 14px;border-bottom:1px solid #5d2061;display:flex;align-items:center;gap:9px}
+.slkv-ws-mark{width:28px;height:28px;border-radius:6px;background:linear-gradient(135deg,#22c55e,#0ea5e9);display:grid;place-items:center;font-weight:800;color:#fff;font-size:12px}
+.slkv-ws-name{font-weight:700;color:#fff;font-size:14px}
+.slkv-ws-sub{font-size:11px;color:#bfa6c4}
+.slkv-search{padding:8px 10px}
+.slkv-search input{width:100%;background:rgba(255,255,255,.06);border:0;color:#fff;border-radius:5px;padding:6px 10px;font-size:12.5px;outline:0}
+.slkv-section{font-size:11.5px;color:#9b7da3;padding:10px 12px 4px;font-weight:500}
+.slkv-row{padding:5px 14px 5px 28px;color:#cdb4d2;font-size:13.5px;cursor:pointer;display:flex;align-items:center;gap:7px;position:relative}
+.slkv-row .hash{position:absolute;left:14px;opacity:.7}
+.slkv-row:hover{background:#350d36;color:#fff}
+.slkv-row.active{background:#1164a3;color:#fff;font-weight:600}
+.slkv-row.unread{color:#fff;font-weight:700}
+.slkv-status{width:7px;height:7px;border-radius:50%;background:#16a34a;flex-shrink:0}
+.slkv-status.away{background:transparent;border:1.5px solid #cdb4d2}
+.slkv-unread{margin-left:auto;background:#ef4444;color:#fff;font-size:10px;font-weight:700;border-radius:9px;padding:1px 6px}
+.slkv-foot{margin-top:auto;padding:12px 14px;border-top:1px solid #5d2061;font-size:11.5px;color:#9b7da3}
+.slkv-foot strong{color:#fff;display:block;font-size:13px;font-weight:600}
+.slkv-main{display:flex;flex-direction:column;background:#fff;min-width:0}
+.slkv-mainh{padding:11px 22px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:10px}
+.slkv-mainh-av{width:24px;height:24px;border-radius:5px;background:#7c3aed;color:#fff;display:grid;place-items:center;font-weight:700;font-size:10px}
+.slkv-mainh-name{font-weight:700;font-size:15px;color:#1d1c1d}
+.slkv-mainh-sub{font-size:11.5px;color:#616061}
+.slkv-mainh .close-btn{margin-left:auto;padding:6px 11px;border-radius:7px;background:#fff;border:1px solid #e5e7eb;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer}
+.slkv-mainh .close-btn:hover{background:#f9fafb}
+.slkv-ctx{margin:8px 22px;padding:10px 14px;border-radius:7px;font-size:12px;display:flex;align-items:center;gap:8px;line-height:1.5}
+.slkv-ctx.flag{background:#f5f3ff;border:1px solid #ddd6fe;color:#5b21b6}
+.slkv-ctx.ok{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534}
+.slkv-thread{flex:1;overflow:auto;padding:14px 0}
+.slkv-msg{display:flex;gap:11px;padding:10px 22px;align-items:flex-start;transition:.1s}
+.slkv-msg:hover{background:#f8f8f8}
+.slkv-msg.crit{background:#fff7ed}
+.slkv-msg.you{background:#fff}
+.slkv-av{width:36px;height:36px;border-radius:6px;color:#fff;display:grid;place-items:center;font-weight:700;font-size:12px;flex-shrink:0;background:#7c3aed}
+.slkv-av.you{background:#f97316}
+.slkv-av.ok{background:#10b981}
+.slkv-msg-body{flex:1;min-width:0}
+.slkv-msg-h{display:flex;align-items:baseline;gap:7px;margin-bottom:1px}
+.slkv-name{font-weight:700;font-size:14.5px;color:#1d1c1d}
+.app-tag{display:inline-block;background:#e9e9eb;color:#616061;font-size:9.5px;font-weight:700;padding:1px 5px;border-radius:3px;margin-left:5px;vertical-align:2px}
+.slkv-time{color:#616061;font-size:11px;font-weight:400}
+.slkv-text{font-size:14.5px;line-height:1.45;color:#1d1c1d}
+.slkv-cc{font-size:12px;color:#616061;margin-top:5px;font-style:italic}
+.slkv-card{margin-top:9px;border-left:3px solid #3b82f6;background:#f8fafc;padding:10px 12px;border-radius:0 6px 6px 0;font-size:13px;max-width:560px}
+.slkv-card-h{font-weight:700;font-size:12.5px;color:#374151;margin-bottom:3px}
+.slkv-card-meta{font-size:11.5px;color:#6b7280;margin-top:5px}
+.slkv-card-acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;padding-top:9px;border-top:1px solid #e5e7eb}
+.slkv-cbtn{padding:5px 12px;border-radius:5px;font-size:12px;font-weight:600;background:#fff;border:1px solid #d1d5db;color:#374151;cursor:pointer}
+.slkv-cbtn:hover{background:#f9fafb}
+.slkv-cbtn.purple{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.slkv-cbtn.purple:hover{background:#6d28d9}
+.slkv-compose{padding:10px 22px 16px;border-top:1px solid #e5e7eb}
+.slkv-compose-box{border:1px solid #d1d5db;border-radius:7px;padding:9px 12px;font-size:13.5px;color:#9ca3af}
+
+.modal-bg{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:300}
+.modal-bg.open{display:flex}
+.modal{background:#fff;border-radius:12px;width:560px;max-width:95vw;overflow:hidden;box-shadow:0 20px 50px rgba(15,23,42,.4);animation:popM .18s ease}
+@keyframes popM{from{transform:scale(.96);opacity:0}to{transform:scale(1);opacity:1}}
+.qsh{padding:18px 22px;border-bottom:1px solid #e5e7eb;display:flex;align-items:flex-start;gap:14px;background:linear-gradient(135deg,#faf5ff,#fff)}
+.qsh-mark{width:34px;height:34px;border-radius:8px;background:#7c3aed;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px;flex-shrink:0}
+.qsh-title{font-weight:700;font-size:15px}
+.qsh-sub{font-size:12.5px;color:#6b7280;margin-top:2px}
+.qsh-x{margin-left:auto;padding:5px 10px;border-radius:6px;color:#6b7280;font-size:18px;cursor:pointer;background:none;border:0}
+.qsh-x:hover{background:#f3f4f6}
+.qsbody{padding:20px 22px}
+.qsctx{padding:11px 14px;background:#f9fafb;border-radius:8px;margin-bottom:18px;font-size:13px;color:#374151;line-height:1.5}
+.qsctx b{color:#111827}
+.qsq{font-weight:700;font-size:15px;margin-bottom:12px;text-align:center}
+.qsthumbs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.qsthumb{padding:18px;border:2px solid #e5e7eb;border-radius:10px;text-align:center;cursor:pointer;transition:.12s;background:#fff}
+.qsthumb.up:hover{border-color:#16a34a;background:#f0fdf4}
+.qsthumb.up.selected{border-color:#16a34a;background:#dcfce7;box-shadow:0 4px 12px rgba(22,163,74,.18)}
+.qsthumb.down:hover{border-color:#dc2626;background:#fef2f2}
+.qsthumb.down.selected{border-color:#dc2626;background:#fee2e2;box-shadow:0 4px 12px rgba(220,38,38,.18)}
+.qsemo{font-size:36px;margin-bottom:5px}
+.qsthumb-l{font-weight:700;font-size:14px}
+.qsthumb-sub{font-size:11.5px;color:#6b7280;margin-top:1px}
+.qsreason{margin-bottom:14px}
+.qsreason label{display:block;font-size:12px;font-weight:600;color:#374151;margin-bottom:6px}
+.qsreason textarea{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:7px;font-size:13.5px;resize:vertical;min-height:54px;outline:0;font-family:inherit}
+.qsreason textarea:focus{border-color:#7c3aed;box-shadow:0 0 0 3px rgba(124,58,237,.1)}
+.qstip{font-size:11.5px;color:#6b7280;margin-top:6px;line-height:1.4}
+.qsfoot{padding:14px 22px;background:#fafafa;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center}
+.qsfoot-meta{font-size:11.5px;color:#6b7280}
+.qsdeep{margin-top:14px;padding:11px 13px;background:#f5f3ff;border-radius:7px;font-size:12.5px;color:#5b21b6;line-height:1.5;display:flex;gap:8px;align-items:flex-start}
+.qsdeep a{color:#7c3aed;text-decoration:underline;cursor:pointer;font-weight:600}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:11px 18px;border-radius:9px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:.22s;z-index:400;display:flex;align-items:center;gap:9px;box-shadow:0 10px 25px rgba(0,0,0,.2)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast .check{color:#34d399;font-weight:700}
+.demo-mini{position:fixed;bottom:18px;right:18px;background:#0f172a;color:#cbd5e1;border-radius:10px;padding:9px 12px;z-index:60;box-shadow:0 10px 30px rgba(0,0,0,.25);font-size:11.5px;display:flex;align-items:center;gap:8px}
+.demo-mini .pulse{width:7px;height:7px;background:#22c55e;border-radius:50%;animation:pulseDM 1.6s infinite}
+@keyframes pulseDM{0%,100%{opacity:1}50%{opacity:.4}}
+.demo-mini button{padding:4px 9px;border-radius:5px;background:rgba(255,255,255,.12);color:#fff;font-size:11px;font-weight:600;cursor:pointer;border:0;margin-left:4px}
+.demo-mini button:hover{background:rgba(255,255,255,.2)}
+/* === V2 ADD: REJECTION EMAIL COMPOSER === */
+.rej{position:fixed;inset:0;background:rgba(15,23,42,.55);display:none;align-items:center;justify-content:center;z-index:200;padding:24px}
+.rej.open{display:flex}
+.rej-card{background:#fff;border-radius:14px;width:1100px;max-width:100%;max-height:92vh;overflow:hidden;box-shadow:0 20px 60px rgba(15,23,42,.4);display:flex;flex-direction:column;animation:popM .2s ease}
+.rej-h{padding:16px 22px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:14px;background:linear-gradient(135deg,#faf5ff,#fff);flex-shrink:0}
+.rej-h-mark{width:34px;height:34px;border-radius:8px;background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;display:grid;place-items:center;font-weight:800;font-size:14px;flex-shrink:0}
+.rej-h-title{font-weight:700;font-size:15px;color:#111827}
+.rej-h-sub{font-size:12.5px;color:#6b7280;margin-top:2px}
+.rej-h-close{margin-left:auto;padding:6px 11px;border-radius:7px;background:#fff;border:1px solid #e5e7eb;font-size:12.5px;font-weight:600;color:#374151;cursor:pointer}
+.rej-h-close:hover{background:#f9fafb}
+.rej-body{flex:1;overflow:auto;display:grid;grid-template-columns:340px 1fr;gap:0;background:#f9fafb;min-height:0}
+.rej-evidence{background:#fff;border-right:1px solid #e5e7eb;overflow:auto;padding:18px}
+.rej-ev-h{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#7c3aed;font-weight:700;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.rej-ev-card{background:#fafafa;border:1px solid #f3f4f6;border-radius:8px;padding:11px 12px;margin-bottom:9px;font-size:12.5px;line-height:1.5}
+.rej-ev-card.cited{background:#eff6ff;border-color:#bfdbfe}
+.rej-ev-card.flagged{background:#fef2f2;border-color:#fecaca}
+.rej-ev-tag{display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#6b7280}
+.rej-ev-tag .pill{font-size:10px;padding:1px 6px}
+.rej-ev-quote{color:#374151;font-style:italic;font-size:12.5px;line-height:1.5}
+.rej-ev-quote::before{content:"❝ ";color:#9ca3af;font-style:normal}
+.rej-ev-meta{font-size:11px;color:#6b7280;margin-top:5px;display:flex;justify-content:space-between}
+.rej-ev-cite{margin-top:6px;font-size:10.5px;color:#1d4ed8;font-weight:600;display:flex;align-items:center;gap:4px}
+.rej-bias-warn{background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:11px 12px;margin-bottom:14px;font-size:12px;color:#7f1d1d;line-height:1.5}
+.rej-bias-warn b{display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#b91c1c;margin-bottom:3px}
+.rej-compose{padding:18px 22px;overflow:auto;display:flex;flex-direction:column;gap:14px}
+.rej-tones{display:flex;gap:6px;flex-wrap:wrap}
+.rej-tone{padding:6px 11px;border-radius:7px;font-size:12px;font-weight:600;background:#fff;border:1px solid #e5e7eb;color:#374151;cursor:pointer}
+.rej-tone.active{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.rej-tone:hover:not(.active){background:#f9fafb}
+.rej-toolbar{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rej-toolbar-l{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rej-toolbar-r{margin-left:auto;display:flex;gap:6px}
+.rej-tb-label{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#6b7280;font-weight:700;margin-right:4px}
+.rej-field{background:#fff;border:1px solid #e5e7eb;border-radius:9px;padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:13px}
+.rej-field-l{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:700;width:60px;flex-shrink:0}
+.rej-field input{flex:1;border:0;outline:0;background:transparent;font-size:13.5px;color:#111827}
+.rej-editor{background:#fff;border:1px solid #e5e7eb;border-radius:9px;display:flex;flex-direction:column;flex:1;min-height:380px}
+.rej-editor-toolbar{padding:8px 12px;border-bottom:1px solid #e5e7eb;display:flex;align-items:center;gap:9px;font-size:12px;color:#6b7280}
+.rej-editor textarea{flex:1;width:100%;padding:14px 18px;border:0;outline:0;resize:none;font-size:14px;line-height:1.65;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:#111827;background:transparent}
+.rej-meta-row{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#6b7280;padding:0 4px}
+.rej-meta-row b{color:#374151;font-weight:600}
+.rej-foot{padding:14px 22px;background:#fff;border-top:1px solid #e5e7eb;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;gap:14px}
+.rej-foot-l{font-size:12px;color:#6b7280;display:flex;align-items:center;gap:8px}
+.rej-foot-l .check{color:#10b981;font-weight:700}
+.rej-confirm{display:flex;align-items:center;gap:8px;font-size:12.5px;color:#374151;cursor:pointer;user-select:none}
+.rej-confirm input{margin:0;cursor:pointer}
+.rej-foot-r{display:flex;gap:8px}
+.rej-regenerating{position:absolute;inset:0;background:rgba(255,255,255,.85);display:none;align-items:center;justify-content:center;z-index:5;border-radius:9px}
+.rej-regenerating.show{display:flex}
+.rej-spinner{width:24px;height:24px;border:3px solid #e5e7eb;border-top-color:#7c3aed;border-radius:50%;animation:rejSpin .8s linear infinite;margin-right:10px}
+@keyframes rejSpin{to{transform:rotate(360deg)}}
+.rej-editor-wrap{position:relative;flex:1;display:flex;min-height:380px}
+/* === END REJECTION EMAIL CSS === */
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ============= SIDEBAR ============= -->
+<aside class="sidebar">
+<div class="brand">
+<div class="brand-mark">N</div>
+<div>
+<div class="brand-name">Northwind</div>
+<div class="brand-sub">Talent Hub</div>
+</div>
+</div>
+<nav class="nav">
+<div class="nav-section">Workspace</div>
+<a><span class="ico">▦</span> Dashboard</a>
+<a><span class="ico">⚐</span> Jobs <span style="margin-left:auto;color:#475569;font-size:11px">8</span></a>
+<a class="active" data-nav="candidates"><span class="ico">◉</span> Candidates <span style="margin-left:auto;color:#475569;font-size:11px">147</span></a>
+<a><span class="ico">▤</span> Interviews</a>
+<a><span class="ico">⚑</span> Offers</a>
+<a><span class="ico">▣</span> Reports</a>
+<div class="nav-section">Setup</div>
+<a><span class="ico">⚙</span> Job templates</a>
+<a><span class="ico">⚒</span> Integrations</a>
+<a><span class="ico">◎</span> Members</a>
+</nav>
+<div class="nav-foot">
+<strong>Maya Linden</strong>
+Senior Recruiter · TA Ops
+</div>
+</aside>
+
+<!-- ============= MAIN ============= -->
+<main class="main">
+<div class="topbar">
+<div class="search">
+<span style="color:#9ca3af">⌕</span>
+<input placeholder="Search candidates, jobs, interviewers…" />
+</div>
+<div class="topbar-spacer"></div>
+<button class="top-btn">＋ Add candidate</button>
+<button class="bell" id="bellBtn" title="3 missing scorecards">
+<span style="font-size:16px">🔔</span>
+<span class="bell-dot"></span>
+</button>
+<button class="sk-btn" id="openSkBtn">
+<span style="font-size:13px">✨</span> Sidekick
+<span class="sk-badge" id="skBadge">5</span>
+</button>
+<button class="top-btn" id="viewAsNina" title="See what the interviewer sees" style="background:#0f172a;color:#fff;border-radius:7px;padding:6px 11px;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:7px"><span style="font-size:13px">👀</span> View as Nina</button>
+<div class="avatar" title="Maya Linden">ML</div>
+</div>
+
+<div class="page" id="page"><!-- views render here --></div>
+</main>
+</div>
+
+<!-- ============= SIDEKICK DRAWER ============= -->
+<div class="sk-overlay" id="skOverlay"></div>
+<aside class="sk-drawer" id="skDrawer" aria-hidden="true">
+<div class="sk-head">
+<div class="sk-head-l">
+<div class="sk-mark">✨</div>
+<div>
+<div class="sk-title">Recruitment Sidekick</div>
+<div class="sk-sub">Debrief intelligence · sits on top of your ATS</div>
+</div>
+</div>
+<button class="sk-x" id="skClose" aria-label="Close">×</button>
+</div>
+<div class="sk-tabs">
+<button class="sk-tab active" data-sktab="nudges">Nudges<span class="sk-tab-count" id="ndCount">2</span></button>
+<button class="sk-tab" data-sktab="cal">Calibration<span class="sk-tab-count" style="background:#f59e0b" id="calCount">2</span></button>
+<button class="sk-tab" data-sktab="decisions">Decisions<span class="sk-tab-count" style="background:#7c3aed" id="decCount">8</span></button>
+<button class="sk-tab" data-sktab="cohort">Cohort</button>
+</div>
+<div class="sk-body" id="skBody"></div>
+</aside>
+
+<!-- Slack mock -->
+<div class="modal-bg" id="slackModal">
+<div class="modal">
+<div class="slack-h">
+<div class="slack-mark">#</div>
+Direct Message · <span id="slackTo" style="opacity:.85;font-weight:500;margin-left:-4px"></span>
+</div>
+<div class="slack-body" id="slackBody"></div>
+<div class="modal-foot">
+<span id="slackMeta">Will be sent via Slack DM · escalates after 24h if unread</span>
+<div class="row">
+<button class="btn" id="slackCancel">Cancel</button>
+<button class="btn btn-pri" id="slackSend">Send nudge</button>
+</div>
+</div>
+</div>
+</div>
+
+<div class="toast" id="toast"><span class="check">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============================================================
+DATA — extracted from Recruitment_Sidekick_MockData_v2.xlsx
+Northwind Analytics · April–May 2026
+============================================================ */
+
+const candidates = [
+{id:'C-001', name:'Aisha Patel', role:'Senior Backend Engineer', stage:'Offer', yoe:8, company:'Stripe', source:'Referral – Patricia Wong', applied:'Apr 14', status:'Shortlisted', sc:'3/3', avg:4.78, av:'#0ea5e9'},
+{id:'C-002', name:'Marcus Chen', role:'Senior Backend Engineer', stage:'Offer', yoe:6, company:'Datadog', source:'LinkedIn outbound', applied:'Apr 17', status:'Shortlisted', sc:'3/3', avg:4.55, av:'#10b981'},
+{id:'C-003', name:'David Kim', role:'Senior Backend Engineer', stage:'Calibration', yoe:7, company:'Uber', source:'Inbound', applied:'Apr 19', status:'In Calibration', sc:'3/3', avg:3.33, flag:'disagree', av:'#f59e0b'},
+{id:'C-004', name:'Priya Sharma', role:'Senior Backend Engineer', stage:'Rejected', yoe:4, company:'Optum', source:'Inbound', applied:'Apr 9', status:'Rejected', sc:'3/3', avg:3.20, av:'#a78bfa'},
+{id:'C-005', name:'Tyler Anderson', role:'Senior Backend Engineer', stage:'Rejected', yoe:9, company:'Target Tech', source:'Referral – HM', applied:'Apr 12', status:'Rejected', sc:'3/3', avg:2.96, flag:'bias', av:'#ef4444'},
+{id:'C-006', name:'Emma Thompson', role:'Senior Backend Engineer', stage:'Rejected', yoe:6, company:'Bright Health', source:'LinkedIn outbound', applied:'Apr 15', status:'Rejected', sc:'3/3', avg:3.69, av:'#ec4899'},
+{id:'C-007', name:'Sofia Rodriguez', role:'Engineering Manager', stage:'Offer', yoe:11, company:'Twilio', source:'Referral – Lisa Park', applied:'Apr 16', status:'Shortlisted', sc:'3/3', avg:4.71, av:'#14b8a6'},
+{id:'C-008', name:'Jordan Williams', role:'Engineering Manager', stage:'Calibration', yoe:9, company:'LinkedIn', source:'Inbound', applied:'Apr 22', status:'PIPELINE BLOCKED', sc:'2/3', avg:3.33, flag:'blocked', av:'#6366f1'},
+{id:'C-009', name:'Ahmed Hassan', role:'Engineering Manager', stage:'Rejected', yoe:8, company:'Branch', source:'LinkedIn outbound', applied:'Apr 13', status:'Rejected', sc:'3/3', avg:2.86, av:'#f97316'},
+{id:'C-010', name:'Rachel Goldman', role:'Engineering Manager', stage:'Rejected', yoe:7, company:'Calabrio', source:'Inbound', applied:'Apr 18', status:'Rejected', sc:'3/3', avg:2.97, av:'#84cc16'}
+];
+
+const scorecards = {
+'C-001':[
+{round:'R1', type:'Technical Phone Screen (Coding)', iv:'Sarah Chen', ivt:'Tech Lead · Bar Raiser', date:'Apr 22', sub:'2.5h', status:'submitted', tech:5.00, soft:4.67, val:4.89, overall:4.85, rec:'Strong Hire', recCls:'rec-strong-hire', conf:'High', mins:25, comment:"Solved BFS/graph problem in 32 minutes with a clean Python solution and proactively analyzed time/space complexity. Followed up with two thoughtful refactors when I asked about edge cases. Easily exceeds the senior bar; one of the strongest screens I've done this quarter."},
+{round:'R2', type:'System Design Onsite', iv:'Marcus Lee', ivt:'Senior Engineer', date:'Apr 24', sub:'5h', status:'submitted', tech:4.50, soft:4.67, val:4.67, overall:4.61, rec:'Strong Hire', recCls:'rec-strong-hire', conf:'High', mins:30, comment:"Designed a distributed rate limiter with thoughtful tradeoffs: chose token bucket + Redis cluster, called out hot-key risk, sketched mitigation. Calibrated her uncertainty well — said 'I don't know' once, then reasoned from first principles. Strong senior signal."},
+{round:'R3', type:'Hiring Manager + Values', iv:'Patricia Wong', ivt:'Engineering Manager (HM)', date:'Apr 25', sub:'6h', status:'submitted', tech:4.25, soft:5.00, val:5.00, overall:4.75, rec:'Strong Hire', recCls:'rec-strong-hire', conf:'High', mins:22, comment:"Asked her about a time she pushed back on a PM decision — she walked through specifics, named the tradeoff, and described how she ultimately aligned the team. Clear ownership and customer-back thinking. Want her on the team.", flag:"⚠ Conflict disclosed: Patricia referred Aisha. Vote noted but should not be weighted in close."}
+],
+'C-003':[
+{round:'R1', type:'Technical Phone Screen (Coding)', iv:'Sarah Chen', ivt:'Tech Lead · Bar Raiser', date:'Apr 28', sub:'2h', status:'submitted', tech:5.00, soft:3.33, val:3.00, overall:3.78, rec:'Hire', recCls:'rec-hire', conf:'High', mins:30, comment:"Technically excellent — finished the coding problem 15 minutes early with an elegant solution and spotted an edge case I missed. He was direct, sometimes blunt, when I asked clarifying questions ('that's not the right question to ask'). Tech bar is unambiguous; collaboration style is something to probe further."},
+{round:'R2', type:'System Design Onsite', iv:'Raj Patel', ivt:'Staff Engineer · Bar Raiser', date:'Apr 30', sub:'4h', status:'submitted', tech:5.00, soft:2.33, val:2.33, overall:3.22, rec:'Lean No', recCls:'rec-lean-no', conf:'Med', mins:35, comment:"System design was top 5% I've seen. He cut me off twice mid-question and said one of my framings was 'wrong' — turned out he was technically correct, but the delivery would land badly with our PMs and junior engineers. Strong tech signal, real concerns about how he'd show up day-to-day."},
+{round:'R3', type:'Hiring Manager + Values', iv:'Patricia Wong', ivt:'Engineering Manager (HM)', date:'May 1', sub:'6.5h ⚠ late', status:'submitted', tech:4.00, soft:2.33, val:2.33, overall:2.89, rec:'No Hire', recCls:'rec-no-hire', conf:'High', mins:20, comment:"He answered every behavioral question with what HE did, never what the team did, even when I asked specifically about collaboration. When I described our flat decision-making culture he said 'sounds slow.' Tech is strong but I would not hire him onto this team as currently calibrated."}
+],
+'C-005':[
+{round:'R1', type:'Technical Phone Screen (Coding)', iv:'Sarah Chen', ivt:'Tech Lead · Bar Raiser', date:'Apr 19', sub:'3h', status:'submitted', tech:4.50, soft:2.67, val:2.33, overall:3.17, rec:'Lean No', recCls:'rec-lean-no', conf:'Med', mins:24, comment:"Coding was strong, no concerns there. He talked over me during the warm-up and dismissed two of my clarifying questions. I'm not sure he'd be a culture fit on a small team — felt like I was being interviewed by him.", flag:"⚠ Vague descriptor flagged: 'culture fit' with no behavior cited"},
+{round:'R2', type:'System Design Onsite', iv:'Raj Patel', ivt:'Staff Engineer · Bar Raiser', date:'Apr 21', sub:'3h', status:'submitted', tech:4.25, soft:2.00, val:2.00, overall:2.75, rec:'No Hire', recCls:'rec-no-hire', conf:'High', mins:28, comment:"Technically capable but the personality was off. Didn't gel. Made a comment about our codebase being 'amateur hour' based on a code sample I shared. Hard pass.", flag:"⚠ Two trait-only descriptors: 'didn't gel', 'personality was off' — Cap 3 review recommended"},
+{round:'R3', type:'Hiring Manager + Values', iv:'Patricia Wong', ivt:'Engineering Manager (HM)', date:'Apr 22', sub:'4h', status:'submitted', tech:4.00, soft:2.33, val:2.00, overall:2.78, rec:'No Hire', recCls:'rec-no-hire', conf:'High', mins:25, comment:"Couldn't get him to describe a single failure he'd owned — every story was someone else's fault. When I asked about giving difficult feedback to a peer, he said most peers 'aren't worth investing the energy.' Strong technical resume, but I'm not going to put him in front of the team."}
+],
+'C-008':[
+{round:'R1', type:'Technical Screen (EM)', iv:'Tom Bradford', ivt:'Director of Engineering · Bar Raiser', date:'Apr 30', sub:'5h', status:'submitted', tech:2.75, soft:4.00, val:4.00, overall:3.58, rec:'Lean No', recCls:'rec-lean-no', conf:'Med', mins:28, comment:"Tech screen was light on hands-on depth for someone making the IC-to-EM jump. He's been more tech-lead than IC for the last 18 months and it shows. Strong on team dynamics and mentoring stories. I'd hesitate on the technical credibility question if he's managing senior ICs."},
+{round:'R2', type:'Leadership Case Study', iv:'Lisa Park', ivt:'VP Engineering (HM)', date:'May 1', sub:'54h ⚠ late', status:'submitted', tech:3.00, soft:3.33, val:3.00, overall:3.11, rec:'Lean No', recCls:'rec-lean-no', conf:'Low', mins:30, comment:"Mixed signal on the leadership case. He has the framework knowledge and could name the right moves on the underperforming-engineer scenario, but his stories were thin — kept saying 'in theory I would' rather than 'here's what I did.' This is a first-time EM signal. Apologies for the late writeup, was traveling."},
+{round:'R3', type:'Cross-Functional + Values', iv:'Nina Kowalski', ivt:'Director of Product', date:'May 2', sub:'— PENDING (44h overdue)', status:'missing', overall:'—', rec:'NOT SUBMITTED', recCls:'rec-missing', mins:0, comment:'Scorecard not yet submitted. Pipeline blocked.'}
+]
+};
+
+// Stages -> candidates
+const stages = [
+{key:'Applied', count:38, ids:[], color:'#9ca3af'},
+{key:'Phone Screen', count:14, ids:[], color:'#6366f1'},
+{key:'Onsite', count:0, ids:[], color:'#3b82f6'},
+{key:'Calibration', count:2, ids:['C-003','C-008'], color:'#f59e0b'},
+{key:'Offer', count:3, ids:['C-001','C-002','C-007'], color:'#10b981'}
+];
+
+const interviewers = {
+'Sarah Chen':{tz:'America/Los_Angeles', cert:'Bar Raiser (Tech)', sla:'96%', open:1, ch:'Slack DM'},
+'Marcus Lee':{tz:'America/Chicago', cert:'Standard', sla:'78%', open:3, ch:'Slack DM', note:'Chronic late on system design panels — coached twice'},
+'Raj Patel':{tz:'America/New_York', cert:'Bar Raiser (Tech, System Design)', sla:'99%', open:2, ch:'Slack DM, Email backup'},
+'Patricia Wong':{tz:'America/Chicago', cert:'Hiring Manager certified', sla:'92%', open:2, ch:'Slack DM + Email cc'},
+'Tom Bradford':{tz:'America/Chicago', cert:'Bar Raiser (EM track)', sla:'88%', open:1, ch:'Email primary, Slack secondary'},
+'Lisa Park':{tz:'America/Chicago', cert:'Bar Raiser (EM track), HM certified', sla:'84%', open:2, ch:'Slack DM', note:'Returned May 3 — was OOO Apr 30–May 2'},
+'Nina Kowalski':{tz:'America/Chicago', cert:'Cross-functional certified', sla:'71%', open:4, ch:'Slack DM, Teams secondary', note:'Reduced availability May 2–7 — Q2 launch week'}
+};
+
+const nudges = [
+{
+id:'N-004', tier:'crit', tierLbl:'48h critical',
+cand:'Jordan Williams', cid:'C-008', round:'R3', role:'Engineering Manager',
+iv:'Nina Kowalski', ivHandle:'@nina.kowalski',
+overdue:'Now ~44 hours overdue · 3 days outstanding',
+flags:['Pipeline blocked','Borderline candidate','Comparable to Carlos M. (regretted hire)'],
+chan:'Slack DM + Email + #recruiting',
+next:'Escalate to hiring manager (Lisa Park) if not received by EOD May 4',
+dm:"Hi Nina — urgent: Jordan's scorecard from May 02 is now 3 days outstanding and the candidate is at risk of dropping. Pipeline blocked. Looping in Lisa (HM) — can you submit by 5pm today, or let us know what's getting in the way? 👇",
+ctxNote:"Cap 1 already sent 3 nudges per spacing rules: warm reminder (May 2 18:00), 24h escalation cross-channel (May 3 10:00), critical with HM cc (May 4 09:00). Nina is on Q2 launch week + has 4 open scorecards — context-aware tone calibration recommended."
+},
+{
+id:'N-006', tier:'warn', tierLbl:'4h soft',
+cand:'Aisha Patel', cid:'C-001', round:'Reference check', role:'Senior Backend Engineer',
+iv:'Sarah Chen', ivHandle:'@sarah.chen',
+overdue:'5 hours overdue · light tier',
+flags:['Offer-stage','First-time late this quarter'],
+chan:'Slack DM',
+next:'Auto-resolve if submitted in next 6h; otherwise escalate at 24h',
+dm:"Hey Sarah — quick one. You ran the reference check for Aisha (Senior Backend) yesterday. Team's ready to send the offer this afternoon — could you drop the writeup in when you get a sec? Should take 5 min — link below 👇",
+ctxNote:"Sarah is at 96% historical SLA — first-time-late should be soft tone. Cron suppressed sending between 7pm–8am PT (her timezone). Sent at 9:12am PT today."
+}
+];
+
+// Calibration prep — Cap 2
+const calibration = [
+{
+id:'C-008', name:'Jordan Williams', role:'Engineering Manager',
+status:'BLOCKED', statusCls:'pill-red', cls:'blocked',
+scIn:'2/3', tech:3.00, soft:3.50, val:3.50, overall:3.33,
+variance:1.0, recMix:'2× Lean No (1 missing)',
+disagree:'Pipeline blocked · Nina R3 still outstanding',
+discussion:"Cannot calibrate. Nina's R3 scorecard is critical — Jordan is on the borderline and a strong cross-functional read could change the outcome. Cap 1 nudge active (3 sent, escalated to HM today). Hold calibration meeting until R3 lands; if missing > 5 days, escalate to Patricia. Comparable past hire flagged: Carlos Mendez (first-time EM, hired Sept '24, 25% team turnover in year 1) — mitigation plan required if we proceed."
+},
+{
+id:'C-003', name:'David Kim', role:'Senior Backend Engineer',
+status:'MAJOR DISAGREEMENT', statusCls:'pill-amber', cls:'disagree',
+scIn:'3/3', tech:4.83, soft:2.50, val:2.67, overall:3.33,
+variance:2.3, recMix:'1× Hire, 1× Lean No, 1× No Hire',
+disagree:'Soft skills 5 vs 2 across panel · values 3 vs 2',
+discussion:"Calibration meeting needed. Tech is unambiguously top of cohort (4.83 avg) — exceeds Aisha on raw technical. Two of three panelists flagged collaboration concerns ('cut me off twice', 'sounds slow'). Question for the room: is this a coaching opportunity or a culture-add concern? If we move forward, who is the right manager and team? Direct comparable: Wei Zhang (hired Mar '25) — same pattern, currently in calibration with EM at 9 months. Hindsight: Patricia's panel concerns should have been actioned. If hiring David, mitigation: senior EM, structured peer feedback at 90 days."
+},
+{
+id:'C-006', name:'Emma Thompson', role:'Senior Backend Engineer',
+status:'MODERATE DISAGREEMENT', statusCls:'pill-amber', cls:'disagree',
+scIn:'3/3', tech:3.17, soft:3.89, val:4.00, overall:3.69,
+variance:1.7, recMix:'1× Hire, 1× Lean No, 1× No Hire',
+disagree:'Tech 4.0 (R1) vs 2.25 (R2) · system design specifically',
+discussion:"Net reject driven by system design depth gap (1/5 from Marcus). Calibration meeting unlikely to change outcome — Marcus's writeup is concrete (URL shortener, no sharding without prompting, capacity math 2 orders of magnitude off) and Patricia corroborated. Recommend warm decline; potential re-engage in 12 months for mid-senior posting."
+},
+{
+id:'C-001', name:'Aisha Patel', role:'Senior Backend Engineer',
+status:'CONSENSUS', statusCls:'pill-green', cls:'consensus',
+scIn:'3/3', tech:4.67, soft:4.89, val:4.78, overall:4.78,
+variance:0.5, recMix:'3× Strong Hire',
+disagree:'—',
+discussion:"Consensus strong hire. Move to offer stage. Sarah and Marcus both ranked top of cohort; recommend fast-tracking compensation conversation. ⚠ Conflict to disclose: Patricia is the referrer — vote noted but should not be weighted in close. Comparable: Maria Chen (hired Sept '25, top 25% performer at 12mo) — pattern works."
+},
+{
+id:'C-007', name:'Sofia Rodriguez', role:'Engineering Manager',
+status:'CONSENSUS', statusCls:'pill-green', cls:'consensus',
+scIn:'3/3', tech:4.25, soft:5.00, val:4.89, overall:4.71,
+variance:0.3, recMix:'3× Strong Hire',
+disagree:'—',
+discussion:"Strongest EM candidate in cohort. Consensus strong hire across panel. Move to offer; recommend Lisa Park as primary closer given the referral relationship. Comparable: Elena Volkov (hired Nov '25, team retention 100% at 6mo) — outcome strongly supports offer."
+}
+];
+
+// Cohort — Cap 3
+const cohortSBE = [
+{rank:1, id:'C-001', name:'Aisha Patel',     tech:4.67, soft:4.89, val:4.78, overall:4.78, status:'Shortlisted'},
+{rank:2, id:'C-002', name:'Marcus Chen',     tech:4.42, soft:4.56, val:4.67, overall:4.55, status:'Shortlisted'},
+{rank:3, id:'C-003', name:'David Kim',       tech:4.83, soft:2.50, val:2.67, overall:3.33, status:'In Calibration'},
+{rank:4, id:'C-006', name:'Emma Thompson',   tech:3.17, soft:3.89, val:4.00, overall:3.69, status:'Rejected'},
+{rank:5, id:'C-005', name:'Tyler Anderson',  tech:4.33, soft:2.33, val:2.22, overall:2.96, status:'Rejected'},
+{rank:6, id:'C-004', name:'Priya Sharma',    tech:2.50, soft:3.22, val:3.89, overall:3.20, status:'Rejected'}
+];
+const cohortEM = [
+{rank:1, id:'C-007', name:'Sofia Rodriguez', tech:4.25, soft:5.00, val:4.89, overall:4.71, status:'Shortlisted'},
+{rank:2, id:'C-008', name:'Jordan Williams', tech:3.00, soft:3.50, val:3.50, overall:3.33, status:'In Calibration'},
+{rank:3, id:'C-010', name:'Rachel Goldman',  tech:2.92, soft:3.00, val:3.00, overall:2.97, status:'Rejected'},
+{rank:4, id:'C-009', name:'Ahmed Hassan',    tech:3.58, soft:2.33, val:2.67, overall:2.86, status:'Rejected'}
+];
+
+const cohortInsights = [
+{type:'pattern', title:'Tech-strong / values-weak split',
+text:"This pattern is concentrated in the SBE cohort — David Kim (5 vs 2 spread on collaboration) and Tyler Anderson. Worth a hiring manager conversation about whether the technical screen is over-weighting certain signals."},
+{type:'bias', title:'Comment language quality is uneven',
+text:"Tyler Anderson R1/R2 uses vague descriptors with no behavior cited. R3 (Patricia) is concrete and defensible — that's the rationale to lead with on the decline.",
+quotes:[
+{scorecard:'Tyler · R1 · Sarah Chen', html:`I'm not sure he'd be a <mark>culture fit</mark> on a small team — felt like I was being interviewed by him.`},
+{scorecard:'Tyler · R2 · Raj Patel',  html:`Technically capable but the <mark>personality was off</mark>. <mark>Didn't gel</mark>.`}
+]},
+{type:'pattern', title:'EM cohort is thin',
+text:"Only 1 strong hire (Sofia). If Sofia declines, the next-best (Jordan, in calibration) sits a full point below her on overall avg. Recommend reopening the funnel."},
+{type:'bias', title:'Bias check — soft-skills variance pattern',
+text:"Across the SBE cohort, the 2 candidates with highest soft-skills variance between interviewers (David: 5 vs 2; Tyler: 3 vs 2) are both candidates with non-Northwind cultural background. Worth a calibration conversation."}
+];
+
+/* ============================================================
+Renderer
+============================================================ */
+
+const $ = id => document.getElementById(id);
+let current = {view:'pipeline', candidate:null, sktab:'nudges'};
+
+const initials = n => n.split(' ').map(s=>s[0]).slice(0,2).join('');
+const av = (name,color,size='') => `<span class="av" style="background:${color}">${initials(name)}</span>`;
+
+function render(){
+const p = $('page');
+if(current.view==='pipeline') p.innerHTML = renderPipeline();
+else if(current.view==='candidate') p.innerHTML = renderCandidate(current.candidate);
+bindCards();
+}
+
+function renderPipeline(){
+return `
+<div class="crumbs">Candidates <span>›</span> <b style="color:#374151">All open roles</b></div>
+<div class="job-header">
+<div>
+<h1 class="h1">Active pipeline</h1>
+<p class="sub">10 candidates across 2 open requisitions · Northwind Analytics</p>
+<div class="job-meta">
+<span><b>Senior Backend Engineer</b> · 6 candidates · HM: Patricia Wong</span>
+<span>·</span>
+<span><b>Engineering Manager</b> · 4 candidates · HM: Lisa Park</span>
+</div>
+</div>
+<div class="row">
+<button class="top-btn" style="border:1px solid #e5e7eb">Filter</button>
+<button class="top-btn" style="border:1px solid #e5e7eb">Sort: Recent</button>
+</div>
+</div>
+
+<div class="ctx-banner">
+<span style="font-size:18px">✨</span>
+<div style="flex:1">
+<b>Sidekick has 8 decision drafts ready</b> · 3 move-forward emails · 5 personalized declines · all live · Cap 4
+</div>
+<button class="sk-btn" onclick="openSk('decisions')" style="font-size:12.5px">Open decisions →</button>
+</div>
+
+<div class="pipeline">
+${stages.map(s => `
+<div class="stage">
+<div class="stage-h"><span>${s.key}</span><span class="stage-count">${s.count}</span></div>
+${s.ids.map(id => candCard(candidates.find(c=>c.id===id))).join('') || (s.count > 0 ? `<div style="text-align:center;color:#9ca3af;font-size:11.5px;padding:30px 8px">${s.count} candidates<br><span style="font-size:10.5px">(not shown in demo)</span></div>` : '')}
+</div>
+`).join('')}
+</div>
+
+<!-- ============= CAP 4 · DECISIONS ON PIPELINE ============= -->
+<div style="margin-top:28px;padding:18px 20px;background:linear-gradient(135deg,#faf5ff 0%,#f5f3ff 100%);border:1px solid #ddd6fe;border-radius:12px">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+<div>
+<div style="display:flex;align-items:center;gap:8px">
+<span style="font-size:18px">✨</span>
+<h2 style="margin:0;font-size:17px;font-weight:700;color:#5b21b6">Cap 4 · Personalized decision emails</h2>
+<span class="pill" style="background:#7c3aed;color:#fff;font-weight:700">LIVE</span>
+</div>
+<p style="margin:4px 0 0;font-size:13px;color:#6d28d9;line-height:1.5">Click any card below — Sidekick drafts the email <b>live with Claude Sonnet</b>, grounded in scorecard evidence. You edit and send.</p>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+<!-- Forward column -->
+<div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11.5px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.06em">
+<span style="font-size:14px">👍</span> Forward queue · 3 ready to send
+</div>
+${candidates.filter(c => c.status === 'Shortlisted').map(c => {
+const f = (typeof window.forwardData !== 'undefined' && window.forwardData[c.id]) ? window.forwardData[c.id] : null;
+const next = f ? f.nextStep.split('·')[0].trim() : 'Move to offer stage';
+return `
+<div style="background:#fff;border:1px solid #d1fae5;border-left:3px solid #10b981;border-radius:8px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:.12s;display:flex;justify-content:space-between;align-items:center;gap:10px"
+onmouseover="this.style.boxShadow='0 2px 8px rgba(16,185,129,.18)';this.style.transform='translateY(-1px)'"
+onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'"
+onclick="event.stopPropagation();openForwardEmail('${c.id}')">
+<div style="display:flex;gap:9px;align-items:center;min-width:0">
+${av(c.name, c.av)}
+<div style="min-width:0">
+<div style="font-weight:700;font-size:13px;color:#111827">${c.name}</div>
+<div style="font-size:11px;color:#6b7280;margin-top:1px">${c.role}</div>
+</div>
+</div>
+<button class="btn btn-pri" style="background:#10b981;font-size:11.5px;padding:5px 10px;flex-shrink:0;font-weight:600">👍 Draft →</button>
+</div>
+`;
+}).join('')}
+</div>
+
+<!-- Decline column -->
+<div>
+<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;font-size:11.5px;font-weight:700;color:#5b21b6;text-transform:uppercase;letter-spacing:.06em">
+<span style="font-size:14px">👎</span> Decline queue · 5 ready to send
+</div>
+${candidates.filter(c => c.status === 'Rejected').map(c => {
+const r = (typeof window.rejData !== 'undefined' && window.rejData[c.id]) ? window.rejData[c.id] : null;
+const bias = r && r.biasWarn;
+const reEng = r && r.reengage;
+return `
+<div style="background:#fff;border:1px solid #ddd6fe;border-left:3px solid #7c3aed;border-radius:8px;padding:10px 12px;margin-bottom:7px;cursor:pointer;transition:.12s;display:flex;justify-content:space-between;align-items:center;gap:10px"
+onmouseover="this.style.boxShadow='0 2px 8px rgba(124,58,237,.18)';this.style.transform='translateY(-1px)'"
+onmouseout="this.style.boxShadow='none';this.style.transform='translateY(0)'"
+onclick="event.stopPropagation();openRejectEmail('${c.id}')">
+<div style="display:flex;gap:9px;align-items:center;min-width:0">
+${av(c.name, c.av)}
+<div style="min-width:0">
+<div style="font-weight:700;font-size:13px;color:#111827;display:flex;align-items:center;gap:5px">
+${c.name}
+${bias ? '<span class="pill pill-amber" style="font-size:9.5px;padding:1px 5px">⚐ Bias-checked</span>' : ''}
+${reEng ? '<span class="pill pill-blue" style="font-size:9.5px;padding:1px 5px">Re-engage</span>' : ''}
+</div>
+<div style="font-size:11px;color:#6b7280;margin-top:1px">${c.role}</div>
+</div>
+</div>
+<button class="btn btn-pri" style="background:#7c3aed;font-size:11.5px;padding:5px 10px;flex-shrink:0;font-weight:600">👎 Draft →</button>
+</div>
+`;
+}).join('')}
+</div>
+</div>
+
+<div style="margin-top:14px;padding:10px 12px;background:#fff;border-radius:7px;font-size:11.5px;color:#6b7280;line-height:1.55">
+<b style="color:#374151">How it works:</b> Each click opens the modal · prompt is built from scorecard evidence + panel pattern read · Claude drafts in real time · vague language is auto-excluded for declines · you edit before sending. <b style="color:#7c3aed">Live and simulated</b> — real API call against the Northwind mock cohort.
+</div>
+</div>
+`;
+}
+
+function candCard(c){
+if(!c) return '';
+let alert = '';
+if(c.flag === 'blocked') alert = `<div class="alert-row alert-red">⛔ Pipeline blocked · R3 missing 44h</div>`;
+else if(c.flag === 'disagree') alert = `<div class="alert-row alert-amber">⚠ Major panel disagreement · variance 2.3</div>`;
+else if(c.flag === 'bias') alert = `<div class="alert-row alert-amber">⚑ Comment language flagged for Cap 3 review</div>`;
+
+return `
+<div class="cand" data-cid="${c.id}">
+<div class="cand-row">
+${av(c.name,c.av)}
+<div style="min-width:0;flex:1">
+<div class="cand-name">${c.name}</div>
+<div class="cand-meta">${c.yoe}y · ${c.company} · ${c.source.split('–')[0].trim()}</div>
+</div>
+</div>
+${alert}
+<div class="cand-foot">
+<span>Scorecards: <b style="color:${c.sc==='3/3'?'#047857':'#b91c1c'};font-weight:700">${c.sc}</b></span>
+<span>Avg <b style="color:#111827;font-weight:700">${c.avg.toFixed(2)}</b></span>
+</div>
+</div>
+`;
+}
+
+function renderCandidate(cid){
+const c = candidates.find(x=>x.id===cid);
+const scs = scorecards[cid];
+if(!c) return '<div>Not found</div>';
+const hasSC = !!scs;
+
+// Banner relevant to this candidate
+let skBanner = '';
+if(c.id==='C-008'){
+skBanner = `<div class="sk-banner">
+<span style="font-size:18px">✨</span>
+<div>
+<b>Sidekick · Cap 1 active</b>
+Pipeline blocked — Nina Kowalski hasn't submitted R3 (44h overdue, 3 nudges sent, escalated to HM today). Calibration meeting on hold. Comparable past hire flagged: <b>Carlos Mendez</b> (first-time EM, regretted outcome).
+<button class="btn btn-pri" style="margin-top:8px;padding:5px 10px;font-size:12px" onclick="openSk('nudges')">View nudge queue →</button>
+</div>
+</div>`;
+} else if(c.id==='C-003'){
+skBanner = `<div class="sk-banner">
+<span style="font-size:18px">✨</span>
+<div>
+<b>Sidekick · Cap 2 ready</b>
+Major panel disagreement (variance 2.3). Tech 4.83 (top of cohort) vs Soft 2.50. Calibration prep doc generated with talking points and a comparable-past-candidate flag.
+<button class="btn btn-pri" style="margin-top:8px;padding:5px 10px;font-size:12px" onclick="openSk('cal')">Open calibration prep →</button>
+</div>
+</div>`;
+} else if(c.id==='C-005'){
+skBanner = `<div class="sk-banner">
+<span style="font-size:18px">✨</span>
+<div>
+<b>Sidekick · Cap 3 review</b>
+Comment language in R1 and R2 uses vague descriptors ('culture fit', 'didn't gel', 'personality off') with no behavior cited. R3 (Patricia) is concrete and defensible — recommend leading the decline with that.
+<button class="btn btn-pri" style="margin-top:8px;padding:5px 10px;font-size:12px" onclick="openSk('cohort')">View cohort bias review →</button>
+<button class="btn btn-pri" style="margin-top:8px;margin-left:6px;padding:5px 10px;font-size:12px;background:#7c3aed" onclick="openRejectEmail('C-005')">Draft rejection email →</button>
+</div>
+</div>`;
+} else if(c.status === 'Rejected' && c.id !== 'C-005'){
+skBanner = `<div class="sk-banner">
+<span style="font-size:18px">✨</span>
+<div>
+<b>Sidekick · Cap 4 — Personalized rejection email</b>
+Sidekick has read all 3 scorecards and can draft a personalized rejection email pulling specific, actionable feedback from the panel. Recruiter review required before sending.
+<button class="btn btn-pri" style="margin-top:8px;padding:5px 10px;font-size:12px;background:#7c3aed" onclick="openRejectEmail('${c.id}')">👎 Draft rejection email →</button>
+</div>
+</div>`;
+} else if(c.status === 'Shortlisted'){
+skBanner = `<div class="sk-banner" style="background:#ecfdf5;border-color:#a7f3d0">
+<span style="font-size:18px">✨</span>
+<div>
+<b style="color:#065f46">Sidekick · Cap 4 — Move-forward email ready</b>
+Panel consensus advance. Sidekick has the strongest-moment observation, the panel mood, and a committed next-step timeline ready. Live Claude draft · you edit and send.
+<button class="btn btn-pri" style="margin-top:8px;padding:5px 10px;font-size:12px;background:#10b981" onclick="openForwardEmail('${c.id}')">👍 Draft move-forward email →</button>
+</div>
+</div>`;
+}
+
+return `
+<div class="crumbs"><a onclick="goto('pipeline')" style="cursor:pointer;color:#2563eb">Candidates</a> <span>›</span> <b style="color:#374151">${c.name}</b></div>
+
+${skBanner}
+
+<div class="cand-page">
+<aside class="cand-card">
+<div class="cand-av-lg" style="background:${c.av}">${initials(c.name)}</div>
+<h2 class="cand-h">${c.name}</h2>
+<div class="cand-role">${c.role}</div>
+<div>
+<span class="pill ${c.status==='PIPELINE BLOCKED'?'pill-red':c.status==='Shortlisted'?'pill-green':c.status==='In Calibration'?'pill-amber':'pill-gray'}">${c.status}</span>
+</div>
+<div class="cand-info">
+<div class="cand-info-row"><span>Current company</span><b>${c.company}</b></div>
+<div class="cand-info-row"><span>Years exp.</span><b>${c.yoe}</b></div>
+<div class="cand-info-row"><span>Source</span><b>${c.source}</b></div>
+<div class="cand-info-row"><span>Applied</span><b>${c.applied}, 2026</b></div>
+<div class="cand-info-row"><span>Avg score</span><b>${c.avg.toFixed(2)} / 5.00</b></div>
+</div>
+</aside>
+
+<div>
+<div class="tabs">
+<button class="tab active">Scorecards (${hasSC?scs.length:0})</button>
+<button class="tab">Resume</button>
+<button class="tab">Activity</button>
+<button class="tab">Notes</button>
+<button class="tab">Offer</button>
+</div>
+
+${hasSC ? renderScorecards(c, scs) : `<div class="panel"><div class="empty">Scorecards loaded for: Aisha Patel (C-001), David Kim (C-003), Tyler Anderson (C-005), Jordan Williams (C-008). Click those candidates to view full debriefs.</div></div>`}
+
+<div class="panel">
+<div class="panel-h"><h3>Activity</h3></div>
+${activityFor(c)}
+</div>
+</div>
+</div>
+`;
+}
+
+function renderScorecards(c, scs){
+return scs.map(s => `
+<div class="panel" style="padding:0">
+<div class="scorecard ${s.status==='missing'?'missing':''}" style="margin:0;border:0">
+<div class="sc-top">
+<div>
+<div class="sc-round">${s.round} · ${s.type}</div>
+<div class="sc-iv">${s.iv}</div>
+<div class="sc-iv-title">${s.ivt}</div>
+</div>
+<div style="text-align:right">
+<div class="sc-rec ${s.recCls}">${s.rec}</div>
+<div style="margin-top:4px;font-size:11.5px;color:#6b7280">${s.date} · sub: ${s.sub}</div>
+</div>
+</div>
+
+${s.status==='missing' ? `
+<div style="padding:14px;background:#fef2f2;border-radius:7px;text-align:center;color:#7f1d1d;font-size:13px">
+<div style="font-size:24px;margin-bottom:6px">⏱</div>
+<div style="font-weight:700;margin-bottom:3px">Scorecard not submitted</div>
+<div style="font-size:12px;color:#991b1b">Sidekick has sent 3 nudges · escalated to hiring manager today</div>
+<button class="btn btn-pri" style="margin-top:10px" onclick="openSk('nudges')">View nudge thread →</button>
+</div>
+` : `
+<div class="scores-grid">
+<div class="scores-col">
+<div class="scores-col-h">Technical (${s.tech.toFixed(2)})</div>
+<div class="score-row"><span>Coding</span><b>${s.round==='R1'?5:s.tech>=4?4:3}/5</b></div>
+<div class="score-row"><span>System Design</span><b>${s.round==='R2'?Math.round(s.tech):4}/5</b></div>
+<div class="score-row"><span>Problem Solving</span><b>${s.tech>=4?5:3}/5</b></div>
+</div>
+<div class="scores-col">
+<div class="scores-col-h">Soft Skills (${s.soft.toFixed(2)})</div>
+<div class="score-row"><span>Communication</span><b>${s.soft>=4?5:s.soft>=3?3:2}/5</b></div>
+<div class="score-row"><span>Collaboration</span><b>${s.soft>=4?5:s.soft>=3?3:2}/5</b></div>
+<div class="score-row"><span>Curiosity</span><b>${s.soft>=4?5:s.soft>=3?4:3}/5</b></div>
+</div>
+<div class="scores-col">
+<div class="scores-col-h">Values (${s.val.toFixed(2)})</div>
+<div class="score-row"><span>Customer Focus</span><b>${s.val>=4?5:s.val>=3?4:2}/5</b></div>
+<div class="score-row"><span>Ownership</span><b>${s.val>=4?5:s.val>=3?3:2}/5</b></div>
+<div class="score-row"><span>Growth Mindset</span><b>${s.val>=4?5:s.val>=3?3:2}/5</b></div>
+</div>
+</div>
+
+<div class="sc-comment">${s.comment}</div>
+${s.flag ? `<div class="sc-row-flag"><span>✨</span><div><b style="display:block;font-size:11px;color:#854d0e;margin-bottom:1px">SIDEKICK FLAG</b>${s.flag}</div></div>` : ''}
+
+<div class="sc-meta">
+<span>Confidence: <b style="color:#374151">${s.conf}</b></span>
+<span>Time spent: <b style="color:#374151">${s.mins} min</b></span>
+<span>Status: <b style="color:#047857">Submitted</b></span>
+</div>
+`}
+</div>
+</div>
+`).join('');
+}
+
+function activityFor(c){
+const acts = {
+'C-001':[
+{dot:'green', body:`<b>Maya Linden</b> moved Aisha to <b>Offer</b>`, t:'2 hours ago'},
+{dot:'purple', body:`<b>Sidekick</b> generated calibration consensus summary`, t:'1 day ago'},
+{dot:'green', body:`<b>Patricia Wong</b> submitted R3 scorecard (Strong Hire)`, t:'May 1, 5:00 PM'},
+{dot:'green', body:`<b>Marcus Lee</b> submitted R2 scorecard (Strong Hire)`, t:'Apr 24, 3:00 PM'},
+{dot:'green', body:`<b>Sarah Chen</b> submitted R1 scorecard (Strong Hire)`, t:'Apr 22, 4:30 PM'}
+],
+'C-003':[
+{dot:'amber', body:`<b>Sidekick</b> flagged major panel disagreement (variance 2.3)`, t:'1 hour ago'},
+{dot:'purple', body:`<b>Sidekick</b> matched profile to past hire <b>Wei Zhang</b> (regretted pattern)`, t:'1 hour ago'},
+{dot:'amber', body:`<b>Patricia Wong</b> submitted R3 (No Hire) — 4h late`, t:'May 1, 9:30 PM'},
+{dot:'green', body:`<b>Raj Patel</b> submitted R2 scorecard (Lean No)`, t:'Apr 30, 2:00 PM'},
+{dot:'green', body:`<b>Sarah Chen</b> submitted R1 scorecard (Hire)`, t:'Apr 28, 4:00 PM'}
+],
+'C-005':[
+{dot:'amber', body:`<b>Sidekick</b> flagged 3 vague descriptors in R1 + R2 comments — bias review recommended`, t:'2 days ago'},
+{dot:'red', body:`<b>Patricia Wong</b> rejected — defensible rationale documented in R3`, t:'Apr 24, 3:00 PM'},
+{dot:'green', body:`<b>Raj Patel</b> submitted R2 scorecard (No Hire)`, t:'Apr 21, 1:00 PM'},
+{dot:'green', body:`<b>Sarah Chen</b> submitted R1 scorecard (Lean No)`, t:'Apr 19, 6:00 PM'}
+],
+'C-008':[
+{dot:'red', body:`<b>Sidekick</b> escalated nudge to HM (Lisa Park) · 3rd nudge sent`, t:'40 minutes ago'},
+{dot:'red', body:`<b>Sidekick</b> sent 24h escalation cross-channel to Nina (Slack + Teams)`, t:'1 day ago'},
+{dot:'amber', body:`<b>Sidekick</b> sent warm reminder to Nina about R3`, t:'2 days ago'},
+{dot:'amber', body:`<b>Lisa Park</b> submitted R2 scorecard (Lean No) — 54h late`, t:'May 3, 7:00 PM'},
+{dot:'green', body:`<b>Tom Bradford</b> submitted R1 scorecard (Lean No)`, t:'Apr 30, 3:00 PM'}
+]
+};
+const list = acts[c.id] || [{dot:'', body:'No activity yet', t:''}];
+return list.map(a => `
+<div class="act-row">
+<span class="act-dot ${a.dot}"></span>
+<div class="act-body">
+<div>${a.body}</div>
+<div class="act-time">${a.t}</div>
+</div>
+</div>
+`).join('');
+}
+
+function bindCards(){
+document.querySelectorAll('.cand[data-cid]').forEach(el => {
+el.addEventListener('click', () => {
+current.candidate = el.dataset.cid;
+current.view = 'candidate';
+render();
+window.scrollTo(0,0);
+});
+});
+}
+
+function goto(view){
+current.view = view;
+current.candidate = null;
+render();
+}
+
+/* ============================================================
+Sidekick drawer
+============================================================ */
+
+function openSk(tab){
+if(tab) current.sktab = tab;
+$('skOverlay').classList.add('open');
+$('skDrawer').classList.add('open');
+renderSk();
+}
+function closeSk(){
+$('skOverlay').classList.remove('open');
+$('skDrawer').classList.remove('open');
+}
+$('openSkBtn').addEventListener('click', () => openSk());
+$('skClose').addEventListener('click', closeSk);
+$('skOverlay').addEventListener('click', closeSk);
+$('bellBtn').addEventListener('click', () => openSk('nudges'));
+window.openSk = openSk;
+window.goto = goto;
+
+document.querySelectorAll('.sk-tab').forEach(t => {
+t.addEventListener('click', () => {
+document.querySelectorAll('.sk-tab').forEach(x => x.classList.remove('active'));
+t.classList.add('active');
+current.sktab = t.dataset.sktab;
+renderSk();
+});
+});
+
+function renderSk(){
+// Sync active tab visually
+document.querySelectorAll('.sk-tab').forEach(t => {
+t.classList.toggle('active', t.dataset.sktab===current.sktab);
+});
+const body = $('skBody');
+if(current.sktab==='nudges') body.innerHTML = renderNudges();
+else if(current.sktab==='cal') body.innerHTML = renderCalibration();
+else if(current.sktab==='decisions') body.innerHTML = renderDecisions();
+else if(current.sktab==='cohort') body.innerHTML = renderCohort();
+bindSk();
+}
+
+function renderNudges(){
+return `
+<div style="margin-bottom:12px;font-size:12px;color:#6b7280;display:flex;justify-content:space-between;align-items:center">
+<span><b style="color:#111827;font-weight:600">2 active</b> · cron checks every 5 min · respects interviewer timezones + OOO</span>
+<span style="color:#9ca3af">↻ updated 1 min ago</span>
+</div>
+${nudges.map(n => `
+<div class="nudge ${n.tier}">
+<div class="nudge-top">
+<div>
+<div class="nudge-cand">${n.cand} <span style="color:#6b7280;font-weight:500;font-size:12px">· ${n.round}</span></div>
+<div class="nudge-iv">${n.role}</div>
+</div>
+<span class="nudge-tier tier-${n.tier}">${n.tierLbl}</span>
+</div>
+<div style="font-size:12px;color:#6b7280">${n.overdue}</div>
+
+<div class="nudge-int">
+${av(n.iv,'#7c3aed')}
+<div style="flex:1;min-width:0">
+<div class="nudge-int-name">${n.iv} <span style="color:#6b7280;font-weight:400">${n.ivHandle}</span></div>
+<div class="nudge-int-meta">${interviewers[n.iv].tz.split('/')[1].replace('_',' ')} · SLA ${interviewers[n.iv].sla} · ${interviewers[n.iv].open} open scorecards</div>
+</div>
+</div>
+${interviewers[n.iv].note ? `<div style="margin-top:6px;font-size:11.5px;color:#854d0e;background:#fef3c7;padding:5px 8px;border-radius:5px">⚠ ${interviewers[n.iv].note}</div>` : ''}
+
+<div class="nudge-flags">
+${n.flags.map(f => `<span class="pill pill-${f.includes('blocked')?'red':f.includes('Borderline')||f.includes('Comparable')?'amber':'gray'}">${f}</span>`).join('')}
+</div>
+
+<div class="nudge-dm">
+<div class="nudge-dm-h">✨ Generated DM · tone: ${n.tier==='crit'?'urgent':'warm reminder'}</div>
+${n.dm}
+</div>
+
+<div style="font-size:11.5px;color:#6b7280;margin-top:8px;line-height:1.5"><b style="color:#374151">Cap 1 context:</b> ${n.ctxNote}</div>
+
+<div class="nudge-actions">
+<button class="btn btn-pri" data-send="${n.id}">Send via ${n.chan.split('+')[0].trim()}</button>
+<button class="btn btn-thumb" title="Move forward">👍</button>
+<button class="btn btn-thumb" title="Reject">👎</button>
+<button class="btn">Edit DM</button>
+</div>
+</div>
+`).join('')}
+
+<div style="margin-top:18px;padding:12px 14px;background:#fff;border:1px dashed #d1d5db;border-radius:9px;font-size:12px;color:#6b7280;line-height:1.6">
+<b style="color:#374151;display:block;margin-bottom:4px">Cron rules</b>
+Escalates at 4h → 24h → 48h+ critical · respects interviewer-local quiet hours (7pm–8am, Mon 9am) · cross-channel allowed at escalation · honors OOO + reduced-availability flags · enforces minimum 4h spacing between same-tier nudges. Marcus Lee gets softer-tone nudges (chronic, coached); Raj Patel rarely sees one (99% SLA).
+</div>
+`;
+}
+
+function renderCalibration(){
+return `
+<div style="margin-bottom:12px;font-size:12px;color:#6b7280">
+<b style="color:#111827;font-weight:600">${calibration.length} candidates</b> in or ready for calibration · auto-generated prep doc per panel
+</div>
+${calibration.map(c => `
+<div class="cal-cand ${c.cls}" data-cal="${c.id}">
+<div class="cal-top">
+<div>
+<div class="cal-name">${c.name}</div>
+<div class="cal-role">${c.role} · ${c.scIn} scorecards in</div>
+</div>
+<span class="pill ${c.statusCls}">${c.status}</span>
+</div>
+<div class="cal-scores">
+<div><label>Tech</label><b class="${c.tech>=4?'ok':c.tech<3?'warn':''}">${typeof c.tech==='number'?c.tech.toFixed(2):c.tech}</b></div>
+<div><label>Soft</label><b class="${c.soft>=4?'ok':c.soft<3?'warn':''}">${typeof c.soft==='number'?c.soft.toFixed(2):c.soft}</b></div>
+<div><label>Values</label><b class="${c.val>=4?'ok':c.val<3?'warn':''}">${typeof c.val==='number'?c.val.toFixed(2):c.val}</b></div>
+<div><label>Overall</label><b>${typeof c.overall==='number'?c.overall.toFixed(2):c.overall}</b></div>
+<div><label>Variance</label><b class="${c.variance>=2?'warn':''}">${c.variance.toFixed(1)}</b></div>
+<div style="margin-left:auto;font-size:11.5px;color:#6b7280;text-align:right">Recs<br><b style="font-size:12px;color:#374151;font-weight:600">${c.recMix}</b></div>
+</div>
+${c.disagree !== '—' ? `<div class="cal-disagree"><b>Disagreement detected</b>${c.disagree}</div>` : ''}
+<div class="cal-disc"><b>✨ Suggested discussion points</b>${c.discussion}</div>
+</div>
+`).join('')}
+`;
+}
+
+function renderDecisions(){
+const decline = candidates.filter(c => c.status === 'Rejected');
+const forward = candidates.filter(c => c.status === 'Shortlisted');
+
+const declineCard = c => {
+const r = (typeof window.rejData !== 'undefined' && window.rejData[c.id]) ? window.rejData[c.id] : null;
+const subline = r ? r.patterns : 'Panel consensus reject — calibration documented.';
+const reEng = r && r.reengage;
+const bias = r && r.biasWarn;
+return `
+<div style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #7c3aed;border-radius:9px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:.12s" onmouseover="this.style.boxShadow='0 2px 8px rgba(124,58,237,.15)'" onmouseout="this.style.boxShadow='none'" onclick="openRejectEmail('${c.id}')">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+<div style="display:flex;gap:9px;align-items:center;min-width:0">
+${av(c.name, c.av)}
+<div style="min-width:0">
+<div style="font-weight:700;font-size:13.5px;color:#111827">${c.name} <span style="color:#6b7280;font-weight:500">· ${c.role}</span></div>
+<div style="font-size:11.5px;font-weight:600;color:#7c3aed;margin-top:1px">👎 Decline · click to draft email</div>
+</div>
+</div>
+<div style="display:flex;gap:5px;flex-shrink:0">
+${bias ? '<span class="pill pill-amber">⚐ Bias-checked</span>' : ''}
+${reEng ? '<span class="pill pill-blue">Re-engage 12mo</span>' : '<span class="pill pill-gray">Clean close</span>'}
+</div>
+</div>
+<div style="font-size:11.5px;color:#4b5563;margin-top:7px;line-height:1.5">${subline}</div>
+</div>
+`;
+};
+
+const forwardCard = c => {
+const f = (typeof window.forwardData !== 'undefined' && window.forwardData[c.id]) ? window.forwardData[c.id] : null;
+const subline = f ? f.patterns : 'Panel consensus strong hire — proceed to offer.';
+const next = f ? f.nextStep.split('·')[0].trim() : 'Move to offer stage';
+return `
+<div style="background:#fff;border:1px solid #e5e7eb;border-left:3px solid #10b981;border-radius:9px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:.12s" onmouseover="this.style.boxShadow='0 2px 8px rgba(16,185,129,.15)'" onmouseout="this.style.boxShadow='none'" onclick="openForwardEmail('${c.id}')">
+<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+<div style="display:flex;gap:9px;align-items:center;min-width:0">
+${av(c.name, c.av)}
+<div style="min-width:0">
+<div style="font-weight:700;font-size:13.5px;color:#111827">${c.name} <span style="color:#6b7280;font-weight:500">· ${c.role}</span></div>
+<div style="font-size:11.5px;font-weight:600;color:#10b981;margin-top:1px">👍 Move forward · click to draft email</div>
+</div>
+</div>
+<span class="pill pill-green" style="flex-shrink:0">${next}</span>
+</div>
+<div style="font-size:11.5px;color:#4b5563;margin-top:7px;line-height:1.5">${subline}</div>
+</div>
+`;
+};
+
+return `
+<div style="margin-bottom:14px;padding:11px 13px;background:#f5f3ff;border:1px solid #ddd6fe;border-radius:9px;font-size:12px;color:#5b21b6;line-height:1.55">
+<b style="display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:4px">✨ Cap 4 — Personalized decision emails</b>
+<span style="color:#6d28d9">👍 Forward = generates email referencing panel's strongest moment.<br>👎 Decline = generates email grounded only in defensible scorecard evidence (vague language excluded).</span>
+<br><span style="color:#7c3aed;font-weight:600">Live Claude · simulated cohort · recruiter approves before send.</span>
+</div>
+
+<div style="margin-bottom:8px;font-size:11.5px;color:#065f46;font-weight:700;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px">
+<span style="font-size:13px">👍</span> Forward queue · ${forward.length} ready
+</div>
+${forward.map(forwardCard).join('')}
+
+<div style="margin:18px 0 8px;font-size:11.5px;color:#5b21b6;font-weight:700;text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:6px">
+<span style="font-size:13px">👎</span> Decline queue · ${decline.length} ready
+</div>
+${decline.map(declineCard).join('')}
+
+<div style="margin-top:16px;padding:11px 13px;background:#fff;border:1px dashed #d1d5db;border-radius:9px;font-size:11.5px;color:#6b7280;line-height:1.55">
+<b style="color:#374151;display:block;margin-bottom:3px">How grounding works</b>
+Forward emails cite one panel strongest-moment + a committed next-step timeline. Decline emails cite specific behavioral observations from scorecards, with vague language ("culture fit", "didn't gel", "personality off") flagged and excluded automatically.
+</div>
+`;
+}
+
+function renderCohort(){
+const row = c => `
+<div class="coh-row">
+<div class="coh-rank">#${c.rank}</div>
+<div class="coh-name">${av(c.name,(candidates.find(x=>x.id===c.id)||{av:'#94a3b8'}).av)}<b>${c.name}</b></div>
+<div class="coh-score"><b>${c.tech.toFixed(1)}</b></div>
+<div class="coh-score"><b>${c.soft.toFixed(1)}</b></div>
+<div class="coh-score"><b>${c.val.toFixed(1)}</b></div>
+<div class="coh-score" style="font-weight:700">${c.overall.toFixed(2)}</div>
+</div>
+`;
+return `
+<div class="coh-section">
+<div class="coh-h">Senior Backend Engineer cohort <span class="pill pill-blue">n=6</span></div>
+<div class="coh-row" style="border-top:0;font-size:10.5px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;font-weight:700">
+<div></div><div>Candidate</div>
+<div style="text-align:right">Tech</div>
+<div style="text-align:right">Soft</div>
+<div style="text-align:right">Val</div>
+<div style="text-align:right">Overall</div>
+</div>
+${cohortSBE.map(row).join('')}
+</div>
+
+<div class="coh-section">
+<div class="coh-h">Engineering Manager cohort <span class="pill pill-blue">n=4</span></div>
+<div class="coh-row" style="border-top:0;font-size:10.5px;color:#6b7280;text-transform:uppercase;letter-spacing:.04em;font-weight:700">
+<div></div><div>Candidate</div>
+<div style="text-align:right">Tech</div>
+<div style="text-align:right">Soft</div>
+<div style="text-align:right">Val</div>
+<div style="text-align:right">Overall</div>
+</div>
+${cohortEM.map(row).join('')}
+</div>
+
+<div class="coh-section">
+<div class="coh-h">✨ Cohort-level insights</div>
+${cohortInsights.map(i => i.type==='pattern' ? `
+<div class="coh-pat"><b>Pattern</b>${i.text}</div>
+` : `
+<div class="coh-bias"><b>Bias check · ${i.title}</b>${i.text}
+${i.quotes ? i.quotes.map(q => `
+<div class="coh-bias-quote"><b style="color:#374151;display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px">${q.scorecard}</b>${q.html}</div>
+`).join('') : ''}
+</div>
+`).join('')}
+</div>
+
+<div class="coh-section">
+<div class="coh-h">Comparable past hires <span class="pill pill-purple">"we've seen this before"</span></div>
+<div style="font-size:12px;color:#374151;line-height:1.6">
+<div style="padding:8px 0;border-bottom:1px solid #f3f4f6"><b>Aisha Patel</b> ↔ <b>Maria Chen</b> (hired Sep '25) — Top 25%, Strong. <span class="muted">Pattern works. Fast offer + referral bonus.</span></div>
+<div style="padding:8px 0;border-bottom:1px solid #f3f4f6"><b>David Kim</b> ↔ <b>Wei Zhang</b> (hired Mar '25) — Meets, in calibration with EM at 9mo. <span class="muted">Direct comparable. Hindsight: should have actioned panel concerns.</span></div>
+<div style="padding:8px 0;border-bottom:1px solid #f3f4f6"><b>Tyler Anderson</b> ↔ <b>James Walker</b> (hired Nov '24) — Regretted hire, left at 7mo. <span class="muted">Same vague-language pattern at loop. Respect the panel reject.</span></div>
+<div style="padding:8px 0"><b>Jordan Williams</b> ↔ <b>Carlos Mendez</b> (hired Sep '24) — Meets at 18mo, 25% team turnover year 1. <span class="muted">First-time EM signal. Mitigation: pair with experienced EM, defer scope to <5 ICs.</span></div>
+</div>
+</div>
+`;
+}
+
+function bindSk(){
+document.querySelectorAll('[data-send]').forEach(b => {
+b.addEventListener('click', () => {
+const n = nudges.find(x => x.id === b.dataset.send);
+openSlack(n);
+});
+});
+document.querySelectorAll('[data-cal]').forEach(c => {
+c.addEventListener('click', () => {
+const cid = c.dataset.cal;
+if(scorecards[cid]){
+closeSk();
+current.candidate = cid;
+current.view = 'candidate';
+render();
+window.scrollTo(0,0);
+}
+});
+});
+}
+
+/* ============================================================
+Slack mock
+============================================================ */
+function openSlack(n){
+$('slackTo').textContent = n.iv;
+$('slackBody').innerHTML = `
+<div class="slack-msg">
+<div class="slack-av">SK</div>
+<div class="slack-msg-body">
+<div class="slack-name">Recruitment Sidekick <span class="app-tag">APP</span><span class="slack-time">just now</span></div>
+<div class="slack-text">${n.dm.replace('👇','<br><br>')}</div>
+<div class="slack-card">
+<div class="slack-card-h">📋 Open scorecard for ${n.cand}</div>
+${n.cand} · ${n.round} · ${n.role}
+<div class="slack-card-meta">Northwind ATS · ~10 min to complete · supports thumbs up/down + 1-line reason</div>
+</div>
+</div>
+</div>
+`;
+$('slackModal').classList.add('open');
+$('slackMeta').textContent = `Channel: ${n.chan} · Tone: ${n.tier==='crit'?'urgent (escalation tier)':'warm reminder'} · Quiet hours respected`;
+}
+$('slackCancel').addEventListener('click', () => $('slackModal').classList.remove('open'));
+$('slackSend').addEventListener('click', () => {
+$('slackModal').classList.remove('open');
+toast('Nudge sent. Sidekick will track response and escalate if needed.');
+});
+
+function toast(msg){
+$('toastMsg').textContent = msg;
+$('toast').classList.add('show');
+setTimeout(() => $('toast').classList.remove('show'), 2600);
+}
+
+// First render
+render();
+</script>
+<!-- ============= V2 ADD: SLACK INTERVIEWER VIEW ============= -->
+<div class="slkv" id="slkv">
+<div class="slkv-app">
+<div class="slkv-side">
+<div class="slkv-ws">
+<div class="slkv-ws-mark">NW</div>
+<div><div class="slkv-ws-name">Northwind</div><div class="slkv-ws-sub">Slack workspace</div></div>
+</div>
+<div class="slkv-search"><input placeholder="Jump to or search…" /></div>
+<div class="slkv-section">Channels</div>
+<div class="slkv-row"><span class="hash">#</span> general</div>
+<div class="slkv-row"><span class="hash">#</span> product-launch</div>
+<div class="slkv-row"><span class="hash">#</span> recruiting</div>
+<div class="slkv-section">Direct messages</div>
+<div class="slkv-row active unread" id="slkvDmRow"><span class="slkv-status"></span> Recruitment Sidekick <span class="app-tag" style="background:rgba(255,255,255,.15);color:inherit">APP</span><span class="slkv-unread" id="slkvUnread">3</span></div>
+<div class="slkv-row"><span class="slkv-status"></span> Maya Linden</div>
+<div class="slkv-row"><span class="slkv-status away"></span> Lisa Park</div>
+<div class="slkv-row"><span class="slkv-status away"></span> Tom Bradford</div>
+<div class="slkv-row"><span class="slkv-status"></span> Patricia Wong</div>
+<div class="slkv-foot"><strong>Nina Kowalski</strong>Director of Product</div>
+</div>
+<div class="slkv-main">
+<div class="slkv-mainh">
+<div class="slkv-mainh-av">SK</div>
+<div>
+<div class="slkv-mainh-name">Recruitment Sidekick <span class="app-tag">APP</span></div>
+<div class="slkv-mainh-sub">Direct message · debrief intelligence app for Northwind hiring panels</div>
+</div>
+<button class="close-btn" id="slkvClose">← Back to ATS view</button>
+</div>
+<div class="slkv-ctx flag" id="slkvCtx">
+<span style="font-size:14px">⚐</span> You're viewing as <b style="margin-left:3px">Nina Kowalski</b> · Director of Product · Q2 launch week (reduced availability) · 4 open scorecards
+</div>
+<div class="slkv-thread" id="slkvThread"></div>
+<div class="slkv-compose">
+<div class="slkv-compose-box">Message Recruitment Sidekick</div>
+</div>
+</div>
+</div>
+</div>
+
+<!-- ============= V2 ADD: QUICK SCORECARD MODAL ============= -->
+<div class="modal-bg" id="qsModal">
+<div class="modal">
+<div class="qsh">
+<div class="qsh-mark">📋</div>
+<div>
+<div class="qsh-title">Scorecard · Jordan Williams</div>
+<div class="qsh-sub">R3 · Cross-Functional + Values · interviewed May 2</div>
+</div>
+<button class="qsh-x" id="qsX">×</button>
+</div>
+<div class="qsbody">
+<div class="qsctx"><b>Quick path:</b> Sidekick supports a thumb + one-line reason. Total time: under 2 minutes. Use this when the full scorecard would take 8+ minutes and the panel is blocked.</div>
+<div class="qsq">Should we move Jordan forward?</div>
+<div class="qsthumbs">
+<div class="qsthumb up" data-thumb="up"><div class="qsemo">👍</div><div class="qsthumb-l">Move forward</div><div class="qsthumb-sub">Continue to next stage</div></div>
+<div class="qsthumb down" data-thumb="down"><div class="qsemo">👎</div><div class="qsthumb-l">Pass</div><div class="qsthumb-sub">Decline this candidate</div></div>
+</div>
+<div class="qsreason">
+<label id="qsLabel">One-line reason (required)</label>
+<textarea id="qsText" placeholder="e.g. 'Strong cross-functional instinct — brought up commit-and-disagree unprompted with two recent examples.'"></textarea>
+<div class="qstip">Tip: name one specific behavior. Sidekick will flag vague phrases like "culture fit" or "didn't gel" without supporting evidence.</div>
+</div>
+<div class="qsdeep">
+<span style="font-size:14px">✨</span>
+<div>Want to write a full scorecard instead? <a id="qsDeep">Open the long form →</a><br>The thumb + one-liner is enough to unblock calibration. The detailed scorecard can come later.</div>
+</div>
+</div>
+<div class="qsfoot">
+<span class="qsfoot-meta">Submits as scorecard SC-024 · panelists notified · calibration unblocked</span>
+<button class="btn btn-pri" id="qsSubmit" disabled>Submit</button>
+</div>
+</div>
+</div>
+
+<!-- ============= V2 ADD: DEMO MINI + TOAST ============= -->
+<div class="demo-mini"><span class="pulse"></span> Demo · <button id="dmReset">↺ Reset</button></div>
+<div class="toast" id="toast"><span class="check">✓</span><span id="toastMsg"></span></div>
+
+<script>
+/* ============= V2 ADD: NINA SLACK VIEW + QUICK SCORECARD ============= */
+(function(){
+const slkv = document.getElementById('slkv');
+const slkvThread = document.getElementById('slkvThread');
+const slkvCtx = document.getElementById('slkvCtx');
+const slkvUnread = document.getElementById('slkvUnread');
+const qsModal = document.getElementById('qsModal');
+const toast = document.getElementById('toast');
+const toastMsg = document.getElementById('toastMsg');
+
+let ninaSubmitted = false;
+let jordanRec = null;
+let jordanReason = '';
+
+function renderThread(){
+if(!ninaSubmitted){
+slkvCtx.className = 'slkv-ctx flag';
+slkvCtx.innerHTML = `<span style="font-size:14px">⚐</span> You're viewing as <b style="margin-left:3px">Nina Kowalski</b> · Director of Product · Q2 launch week (reduced availability) · 4 open scorecards`;
+slkvUnread.style.display = '';
+slkvUnread.textContent = '3';
+slkvThread.innerHTML = `
+<div class="slkv-msg">
+<div class="slkv-av">SK</div>
+<div class="slkv-msg-body">
+<div class="slkv-msg-h"><span class="slkv-name">Recruitment Sidekick <span class="app-tag">APP</span><span class="slkv-time">Tuesday, 11:23 AM</span></span></div>
+<div class="slkv-text">Hi Nina — quick reminder that Jordan's R3 scorecard from earlier today is still open. No urgency — we're not calibrating until later this week 👇</div>
+<div class="slkv-card">
+<div class="slkv-card-h">📋 Jordan Williams · R3 · Cross-Functional + Values</div>
+Engineering Manager · interviewed May 2
+<div class="slkv-card-meta">Northwind ATS · standard scorecard takes ~10 min</div>
+</div>
+</div>
+</div>
+<div class="slkv-msg">
+<div class="slkv-av">SK</div>
+<div class="slkv-msg-body">
+<div class="slkv-msg-h"><span class="slkv-name">Recruitment Sidekick <span class="app-tag">APP</span><span class="slkv-time">Yesterday, 10:00 AM</span></span></div>
+<div class="slkv-text">Hey Nina, second nudge. Jordan's R3 is now ~24h overdue and the calibration meeting is being scheduled. I know you're in launch week — would the quick path (👍/👎 + one-liner) work? Takes &lt;2 min.</div>
+</div>
+</div>
+<div class="slkv-msg crit">
+<div class="slkv-av">SK</div>
+<div class="slkv-msg-body">
+<div class="slkv-msg-h"><span class="slkv-name">Recruitment Sidekick <span class="app-tag">APP</span><span class="slkv-time">Today, 9:00 AM · 1 min ago</span></span></div>
+<div class="slkv-text">Hi Nina — urgent: Jordan's scorecard from May 02 is now 3 days outstanding and the candidate is at risk of dropping. Pipeline blocked. Looping in Lisa (HM) — can you submit by 5pm today, or let us know what's getting in the way? 👇</div>
+<div class="slkv-cc">cc: Lisa Park, Maya Linden</div>
+<div class="slkv-card">
+<div class="slkv-card-h">📋 Jordan Williams · R3 · Cross-Functional + Values</div>
+Engineering Manager · interviewed May 2 · ~44h overdue
+<div class="slkv-card-meta">Pick the path that works for you ↓</div>
+<div class="slkv-card-acts">
+<button class="slkv-cbtn purple" id="slkvQuick">⚡ Quick path (under 2 min)</button>
+<button class="slkv-cbtn">📋 Full scorecard (~10 min)</button>
+<button class="slkv-cbtn">⏱ I need more time</button>
+</div>
+</div>
+</div>
+</div>`;
+const qb = document.getElementById('slkvQuick');
+if(qb) qb.addEventListener('click', openQuick);
+} else {
+slkvCtx.className = 'slkv-ctx ok';
+slkvCtx.innerHTML = `<span style="font-size:14px">✓</span> You just submitted Jordan's R3 scorecard via Sidekick — calibration is unblocked. Maya (recruiter) and Lisa (HM) have been notified.`;
+slkvUnread.style.display = 'none';
+const up = jordanRec === 'up';
+slkvThread.innerHTML = `
+<div class="slkv-msg">
+<div class="slkv-av">SK</div>
+<div class="slkv-msg-body">
+<div class="slkv-msg-h"><span class="slkv-name">Recruitment Sidekick <span class="app-tag">APP</span><span class="slkv-time">Tuesday, 11:23 AM</span></span></div>
+<div class="slkv-text">Hi Nina — quick reminder that Jordan's R3 scorecard from earlier today is still open. No urgency — we're not calibrating until later this week 👇</div>
+</div>
+</div>
+<div class="slkv-msg">
+<div class="slkv-av">SK</div>
+<div class="slkv-msg-body">
+<div class="slkv-msg-h"><span class="slkv-name">Recruitment Sidekick <span class="app-tag">APP</span><span class="slkv-time">Yesterday, 10:00 AM</span></span></div>
+<div class="slkv-text">Hey Nina, second nudge. Jordan's R3 is now ~24h overdue and the calibration meeting is being scheduled. I know you're in launch week — would the quick path (👍/👎 + one-liner) work? Takes &lt;2 min.</div>
+</div>
+</div>
+<div class="slkv-msg">
+<div class="slkv-av">SK</div>
+<div class="slkv-msg-body">
+<div class="slkv-msg-h"><span class="slkv-name">Recruitment Sidekick <span class="app-tag">APP</span><span class="slkv-time">Today, 9:00 AM</span></span></div>
+<div class="slkv-text">Hi Nina — urgent: Jordan's scorecard from May 02 is now 3 days outstanding and the candidate is at risk of dropping. Pipeline blocked. Looping in Lisa (HM) — can you submit by 5pm today, or let us know what's getting in the way? 👇</div>
+<div class="slkv-cc">cc: Lisa Park, Maya Linden</div>
+</div>
+</div>
+<div class="slkv-msg you">
+<div class="slkv-av you">NK</div>
+<div class="slkv-msg-body">
+<div class="slkv-msg-h"><span class="slkv-name">Nina Kowalski<span class="slkv-time">Today, 9:42 AM</span></span></div>
+<div class="slkv-text">Sorry — totally lost track in launch week. Doing the quick path now.</div>
+</div>
+</div>
+<div class="slkv-msg">
+<div class="slkv-av ok">SK</div>
+<div class="slkv-msg-body">
+<div class="slkv-msg-h"><span class="slkv-name">Recruitment Sidekick <span class="app-tag">APP</span><span class="slkv-time">Today, 9:44 AM · just now</span></span></div>
+<div class="slkv-text">Nina submitted: <b>${up?'👍 Move forward':'👎 Pass'}</b> · "${escapeHtml(jordanReason || (up?'Strong cross-functional read.':'First-time EM signal — strong on framework but stories were thin.'))}"<br><br>✓ Calibration unblocked. Maya and Lisa notified. Thank you 🙏</div>
+</div>
+</div>`;
+}
+}
+function escapeHtml(s){return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+function openSlkv(){ slkv.classList.add('open'); renderThread(); }
+function closeSlkv(){ slkv.classList.remove('open'); }
+
+function openQuick(){
+qsModal.classList.add('open');
+document.querySelectorAll('.qsthumb').forEach(t=>t.classList.remove('selected'));
+document.getElementById('qsText').value = '';
+document.getElementById('qsSubmit').disabled = true;
+jordanRec = null;
+jordanReason = '';
+}
+function closeQuick(){ qsModal.classList.remove('open'); }
+
+function showToast(msg){
+toastMsg.textContent = msg;
+toast.classList.add('show');
+setTimeout(()=>toast.classList.remove('show'), 3500);
+}
+
+// Wire up
+document.getElementById('viewAsNina').addEventListener('click', openSlkv);
+document.getElementById('slkvClose').addEventListener('click', closeSlkv);
+document.getElementById('qsX').addEventListener('click', closeQuick);
+document.getElementById('qsDeep').addEventListener('click', () => {
+showToast('Long form would open in the ATS — quick path is faster, try it!');
+});
+document.querySelectorAll('.qsthumb').forEach(t => {
+t.addEventListener('click', () => {
+document.querySelectorAll('.qsthumb').forEach(x => x.classList.remove('selected'));
+t.classList.add('selected');
+jordanRec = t.dataset.thumb;
+document.getElementById('qsLabel').textContent = jordanRec==='up'
+? 'One-line reason: why move forward? (required)'
+: 'One-line reason: why pass? (required)';
+const txt = document.getElementById('qsText').value.trim();
+document.getElementById('qsSubmit').disabled = !txt;
+});
+});
+document.getElementById('qsText').addEventListener('input', e => {
+document.getElementById('qsSubmit').disabled = !(e.target.value.trim() && jordanRec);
+});
+document.getElementById('qsSubmit').addEventListener('click', () => {
+jordanReason = document.getElementById('qsText').value.trim();
+ninaSubmitted = true;
+closeQuick();
+renderThread();
+showToast(`Scorecard submitted (${jordanRec==='up'?'👍 Move forward':'👎 Pass'}) — calibration unblocked. Thanks Nina!`);
+});
+document.getElementById('dmReset').addEventListener('click', () => {
+ninaSubmitted = false;
+jordanRec = null;
+jordanReason = '';
+if(slkv.classList.contains('open')) renderThread();
+showToast('Demo state reset.');
+});
+})();
+</script>
+<!-- ============= V2 ADD: REJECTION EMAIL COMPOSER ============= -->
+<div class="rej" id="rejModal">
+<div class="rej-card">
+<div class="rej-h">
+<div class="rej-h-mark">✉</div>
+<div>
+<div class="rej-h-title">Rejection email · <span id="rejCandName">Tyler Anderson</span></div>
+<div class="rej-h-sub">Drafted by Sidekick from <span id="rejScCount">3</span> scorecards · recruiter review required before sending</div>
+</div>
+<button class="rej-h-close" id="rejClose">← Cancel</button>
+</div>
+<div class="rej-body">
+<div class="rej-evidence" id="rejEvidence"></div>
+<div class="rej-compose">
+<div id="rejBiasWarn"></div>
+<div class="rej-toolbar">
+<span class="rej-tb-label">Tone</span>
+<div class="rej-tones" id="rejTones">
+<button class="rej-tone active" data-tone="warm">Warm + specific</button>
+<button class="rej-tone" data-tone="brief">Brief + professional</button>
+<button class="rej-tone" data-tone="reengage">Door-open · re-engage later</button>
+</div>
+</div>
+<div class="rej-field"><div class="rej-field-l">To</div><input id="rejTo" value="" /></div>
+<div class="rej-field"><div class="rej-field-l">From</div><input id="rejFrom" value="Maya Linden &lt;maya.linden@northwind.io&gt;" /></div>
+<div class="rej-field"><div class="rej-field-l">Subject</div><input id="rejSubject" value="" /></div>
+<div class="rej-editor-wrap">
+<div class="rej-editor">
+<div class="rej-editor-toolbar">
+<span style="font-size:14px">✨</span> Sidekick draft · grounded in <b id="rejGroundingCount" style="color:#7c3aed;font-weight:700">2</b> cited scorecard quotes · edit freely below
+<button class="btn btn-sm" style="margin-left:auto" id="rejRegen">↻ Regenerate</button>
+</div>
+<textarea id="rejBody" spellcheck="true"></textarea>
+</div>
+<div class="rej-regenerating" id="rejSpinner"><div class="rej-spinner"></div><span>Regenerating with new tone…</span></div>
+</div>
+<div class="rej-meta-row">
+<span>Body length: <b id="rejWordCount">0</b> words · target ~120-180</span>
+<span id="rejEditedFlag" style="color:#7c3aed;font-weight:600;display:none">✎ Edited from original draft</span>
+</div>
+</div>
+</div>
+<div class="rej-foot">
+<div class="rej-foot-l">
+<label class="rej-confirm">
+<input type="checkbox" id="rejConfirm" />
+I've reviewed the email and confirm it's accurate, fair, and free of vague language
+</label>
+</div>
+<div class="rej-foot-r">
+<button class="btn" id="rejSaveDraft">💾 Save as draft</button>
+<button class="btn btn-pri" id="rejSend" disabled>✉ Send to candidate</button>
+</div>
+</div>
+</div>
+</div>
+
+<script>
+/* ============= V2 ADD: REJECTION EMAIL COMPOSER LOGIC ============= */
+(function(){
+const rejData = {
+'C-004':{
+name:'Priya Sharma', email:'priya.sharma@example.com', firstName:'Priya', role:'Senior Backend Engineer',
+headline:'4yoe · backend at Optum (healthcare/claims)',
+evidence:[
+{round:'R1 · Sarah Chen · Tech', cited:true, quote:"Coding solution worked but took the full time and didn't reach the optimization. Would benefit from another year or two on harder distributed-systems problems before the senior bar.", soft:false},
+{round:'R2 · Raj Patel · System Design', cited:true, quote:"System design was the gap. Designed a basic queue-and-worker model but didn't reason about partitioning or failure modes when I pushed. Mid-level signal, not senior.", soft:false},
+{round:'R3 · Patricia Wong · HM', cited:false, quote:"Loved her energy and customer-first thinking. The technical depth gap is the only real concern — I'd happily revisit her in 12-18 months.", soft:false}
+],
+patterns:'Tech depth gap on distributed-systems concepts (system design specifically). Soft skills + values were strong.',
+reengage:true
+},
+'C-005':{
+name:'Tyler Anderson', email:'tyler.anderson@example.com', firstName:'Tyler', role:'Senior Backend Engineer',
+headline:'9yoe · principal at Target Tech · referred by HM',
+evidence:[
+{round:'R1 · Sarah Chen · Tech', cited:false, quote:"I'm not sure he'd be a culture fit on a small team — felt like I was being interviewed by him.", soft:true, flagged:true, flag:'Vague: "culture fit" with no behavior cited'},
+{round:'R2 · Raj Patel · System Design', cited:false, quote:"Technically capable but the personality was off. Didn't gel.", soft:true, flagged:true, flag:'Trait-only descriptors — Cap 3 flagged'},
+{round:'R3 · Patricia Wong · HM', cited:true, quote:"Couldn't get him to describe a single failure he'd owned — every story was someone else's fault. When I asked about giving difficult feedback to a peer, he said most peers 'aren't worth investing the energy.'", soft:false}
+],
+patterns:'Specific behavioral evidence in R3 (Patricia) — concrete and defensible. R1/R2 use vague language; do NOT cite as rationale.',
+reengage:false,
+biasWarn:true
+},
+'C-006':{
+name:'Emma Thompson', email:'emma.thompson.dev@example.com', firstName:'Emma', role:'Senior Backend Engineer',
+headline:'6yoe · health-tech at Bright Health · API/HIPAA experience',
+evidence:[
+{round:'R1 · Sarah Chen · Tech', cited:false, quote:"Solid coding pass — clean Python, asked good clarifying questions. No concerns at the screen.", soft:false},
+{round:'R2 · Marcus Lee · System Design', cited:true, quote:"Designed a URL shortener but missed sharding entirely without prompting. Capacity math was 2 orders of magnitude off. The API design was strong; the system design depth gap is the issue.", soft:false},
+{round:'R3 · Patricia Wong · HM', cited:true, quote:"Strong on the team-dynamics and compliance discussions — she'd be a good fit culturally. Tech depth on system design is the concern; that's Marcus's read and I trust it.", soft:false}
+],
+patterns:'System design depth specifically (R2 + R3 corroborated). Otherwise strong signal — clear re-engage candidate after a 12-month skill build.',
+reengage:true
+},
+'C-009':{
+name:'Ahmed Hassan', email:'ahmed.hassan.em@example.com', firstName:'Ahmed', role:'Engineering Manager',
+headline:'8yoe · 3y EM at Branch · consumer fintech',
+evidence:[
+{round:'R1 · Tom Bradford · Tech screen', cited:true, quote:"Tech credibility for an EM role was thin — he hasn't shipped IC code in 3 years and it showed. Would struggle to coach senior engineers without that depth.", soft:false},
+{round:'R2 · Lisa Park · Leadership case', cited:true, quote:"Leadership case answers were generic — kept naming frameworks (RACI, blameless postmortems) without telling me a single specific story of when he'd actually used them.", soft:false},
+{round:'R3 · Nina Kowalski · X-Functional', cited:false, quote:"Cross-functional was OK — pleasant in conversation, but couldn't recall a specific time he'd disagreed with a PM and how he'd resolved it. EM-track gap.", soft:false}
+],
+patterns:'Two-pronged gap: tech credibility (R1) + concrete leadership stories (R2). Both panel members independently flagged the same pattern.',
+reengage:true
+},
+'C-010':{
+name:'Rachel Goldman', email:'rachel.goldman@example.com', firstName:'Rachel', role:'Engineering Manager',
+headline:'7yoe · TLM at Calabrio · .NET background',
+evidence:[
+{round:'R1 · Tom Bradford · Tech screen', cited:true, quote:"Strong tech credibility — she's still ~60% IC. The gap is scope: she's managed 4 engineers part-time, and we're hiring for an EM who'll grow to 10+ within a year.", soft:false},
+{round:'R2 · Lisa Park · Leadership case', cited:true, quote:"Hands-on management style is good for a 4-person team but won't scale. When I described our planned org of 12, her answers shifted to 'I'd lean more on tech leads' — without a clear plan for how to develop those tech leads.", soft:false},
+{round:'R3 · Nina Kowalski · X-Functional', cited:false, quote:"Easy to work with cross-functionally. The scope question is real though — same concern Tom and Lisa raised.", soft:false}
+],
+patterns:'Scope mismatch — Rachel manages 4, we need EM for 10+. Not a quality issue, a fit-to-this-role issue.',
+reengage:true
+}
+};
+
+// ============================================================
+// FORWARD DATA — for shortlisted candidates getting "move forward" emails
+// The 👍 (thumbs up) flow per the Cap 1 skill spec
+// ============================================================
+const forwardData = {
+'C-001':{
+name:'Aisha Patel', email:'aisha.patel@example.com', firstName:'Aisha', role:'Senior Backend Engineer',
+headline:'8yoe · backend at Stripe · referred by Patricia (HM)',
+strongestMoment:'R2 system design — designed a distributed rate limiter with token bucket + Redis cluster, named the hot-key risk unprompted, and recovered from one "I don\'t know" by reasoning from first principles. Marcus Lee called it "strong senior signal."',
+panelMood:'3× Strong Hire · variance 0.5 · Sarah called it one of the strongest screens this quarter',
+nextStep:'Move to offer · compensation conversation this week · Patricia closing',
+patterns:'Top of cohort across every dimension. Patricia (HM, also referrer) is the natural closer.',
+timeline:'You\'ll hear from me by end of day Friday with the offer details.'
+},
+'C-002':{
+name:'Marcus Chen', email:'marcus.chen@example.com', firstName:'Marcus', role:'Senior Backend Engineer',
+headline:'6yoe · senior at Datadog · observability/metrics',
+strongestMoment:'R3 with Patricia — when she asked about a moment you pushed back on a PM decision, you walked through the specific tradeoff and how you aligned the team after. Patricia\'s exact words: "want him on the team."',
+panelMood:'2× Strong Hire, 1× Hire · variance 0.7 · one minor flag from Raj on directional capacity math',
+nextStep:'Move to offer · short follow-up call to confirm capacity-math depth (Raj\'s flag) · then comp conversation',
+patterns:'Consensus hire. Raj\'s capacity-math note is small enough to confirm in a 30-min follow-up rather than a full re-loop.',
+timeline:'I\'ll reach out tomorrow to schedule the 30-min follow-up with Raj — comp details to follow that.'
+},
+'C-003':{
+name:'David Kim', email:'david.kim.dev@example.com', firstName:'David', role:'Senior Backend Engineer',
+headline:'7yoe · marketplace infra at Uber · top tech score in cohort',
+strongestMoment:'R2 system design with Raj — top 5% he\'s seen. You spotted a framing error in his question and were technically correct.',
+panelMood:'1× Hire, 1× Lean No, 1× No Hire · variance 2.3 · calibration meeting outcome pending',
+nextStep:'Calibration meeting tomorrow · two of three panelists flagged collaboration concerns we want to discuss with you directly before deciding next steps',
+patterns:'Tech is unambiguously top of cohort. Soft skills variance is real and deserves an honest conversation.',
+timeline:'I\'ll be in touch by Wednesday with next steps after our calibration meeting.'
+},
+'C-007':{
+name:'Sofia Rodriguez', email:'sofia.rodriguez@example.com', firstName:'Sofia', role:'Engineering Manager',
+headline:'11yoe total · 4y EM at Twilio · grew payments team 5→14 · referred by Lisa',
+strongestMoment:'R2 leadership case with Lisa — your story about shipping the tokenization platform on schedule despite two senior engineers leaving mid-project. Lisa called it "the best leadership case in the cohort."',
+panelMood:'3× Strong Hire · variance 0.3 · perfect 5.0 soft skills · clear top of stack',
+nextStep:'Move to offer · Lisa Park (your referrer) will be the primary closer · comp conversation this week',
+patterns:'Strongest EM candidate in the cohort. Lisa Park is the natural closer given the referral relationship.',
+timeline:'Lisa will reach out within 48 hours. I\'ll follow up directly with offer details after that conversation.'
+},
+'C-008':{
+name:'Jordan Williams', email:'jordan.williams.eng@example.com', firstName:'Jordan', role:'Engineering Manager',
+headline:'9yoe · senior staff TL at LinkedIn · first-time EM transition',
+strongestMoment:'R1 tech screen with Tom — your stories about mentoring engineers (six mentees, two promoted to senior on your watch) were specific and credible. Tom flagged the IC-to-EM jump but said the mentoring depth is "real, not theoretical."',
+panelMood:'2× Lean No · 1 of 3 scorecards still missing (Nina R3) · pipeline blocked',
+nextStep:'Pause briefly · we\'re still waiting on the cross-functional scorecard from R3 · I\'ll have clarity by end of week',
+patterns:'Cannot decide yet — Nina\'s scorecard is critical to the read. Cap 1 nudge is active. Honest hold.',
+timeline:'I\'ll be back in touch by Friday with a definitive next step. Apologies for the delay — it\'s ours, not yours.'
+}
+};
+
+// Expose data to renderDecisions (outside IIFE scope)
+window.rejData = rejData;
+window.forwardData = forwardData;
+
+const tones = {
+warm: (d) => `Hi ${d.firstName},\n\nThank you for the time you spent with our team interviewing for the ${d.role} role at Northwind Analytics. I want to give you the substantive feedback you deserve rather than a templated note.\n\n${toneBodyWarm(d)}\n\nI know how much energy goes into a multi-stage interview process, and the panel was unanimous in their respect for what you brought to the conversations. ${d.reengage ? `If your experience grows in the area above over the next 12-18 months, we'd genuinely welcome a conversation again.` : `I want to be straightforward with you: based on this loop, I don't expect we'll be a fit on future roles.`}\n\nWishing you well in what comes next.\n\nMaya Linden\nSenior Recruiter, Northwind Analytics`,
+brief: (d) => `Hi ${d.firstName},\n\nThanks for the time you invested with us. After reviewing the full panel feedback for the ${d.role} role, we won't be moving forward.\n\nThe primary signal: ${toneBodyBrief(d)}\n\n${d.reengage ? `We'd be open to revisiting if your experience deepens in this area in the next 12-18 months.` : `We're being direct so you can move on quickly.`}\n\nBest,\nMaya Linden\nNorthwind Analytics`,
+reengage: (d) => `Hi ${d.firstName},\n\nFirst — thank you. The panel genuinely enjoyed meeting you, and I want to be direct about both why we're not moving forward AND why I'd like to stay in touch.\n\n${toneBodyReengage(d)}\n\nThis isn't a "no forever" — it's a "not for this specific role at this specific moment." I'd like to add you to my talent pool with a follow-up reminder set for ~12 months out, and I'll personally reach back out when something opens up that aligns better.\n\nIf you'd prefer I close the loop and not stay in touch, just reply and let me know.\n\nMaya Linden\nSenior Recruiter, Northwind Analytics`
+};
+
+function toneBodyWarm(d){
+if(d.id === 'C-005' || d.name === 'Tyler Anderson'){
+return `The panel's primary feedback came from the hiring manager round: when asked about owning a failure or giving difficult feedback to a peer, the answers tended toward attributing challenges to others rather than reflecting on your own role. We try to hire for direct ownership and a coaching disposition toward peers — and that's where the read ended up.\n\nYour technical credentials are strong; this isn't about engineering capability.`;
+}
+if(d.id === 'C-004' || d.name === 'Priya Sharma'){
+return `The technical screen and HM rounds were strong — your customer-first thinking and energy came through clearly. The gap was on the system design round: at the senior level we're hiring for, we need fluency with distributed-systems tradeoffs (partitioning, failure modes, capacity reasoning), and that's the area to deepen before the next conversation.`;
+}
+if(d.id === 'C-006' || d.name === 'Emma Thompson'){
+return `Your API design and compliance background were genuinely strong — the panel called out the HIPAA/PHI work specifically. The gap that ended up being decisive was system design depth at scale: the URL-shortener exercise didn't reach sharding considerations or accurate capacity math without prompting, and that's a senior bar we need to hold firmly.`;
+}
+if(d.id === 'C-009' || d.name === 'Ahmed Hassan'){
+return `Two specific signals from the panel: (1) the technical credibility you bring to coaching senior ICs felt thin — you've been further from the code for ~3 years and that came through; (2) the leadership case answers stayed at the framework level (RACI, blameless postmortems) without specific stories of when you'd applied them in real situations. Both are addressable; right now they don't yet meet our bar for this role.`;
+}
+if(d.id === 'C-010' || d.name === 'Rachel Goldman'){
+return `This is honestly more about the role than about you. Your tech credibility is strong (Tom flagged this specifically) and your hands-on management style works well for a 4-person team. The gap is scope: this role grows to 10+ engineers in year one, and we needed clearer evidence of how you'd develop tech leads to scale through that. For an EM role at a smaller scope, you'd be very competitive.`;
+}
+return `The panel's feedback centered on a specific gap that you'd be able to close with focused experience over the next 12-18 months.`;
+}
+function toneBodyBrief(d){
+if(d.id === 'C-005') return `the hiring manager round surfaced concerns about ownership of failures and openness to peer feedback — patterns we'd want to see differently for this team.`;
+if(d.id === 'C-004') return `system design depth at the senior bar (distributed-systems tradeoffs, capacity reasoning).`;
+if(d.id === 'C-006') return `system design depth at the senior bar (sharding, capacity math).`;
+if(d.id === 'C-009') return `tech credibility for coaching senior ICs, plus leadership case answers stayed at framework level rather than specific stories.`;
+if(d.id === 'C-010') return `scope mismatch — your hands-on style fits a 4-person team; this role grows to 10+ in year one.`;
+return `a specific area the panel flagged as below the bar for this role.`;
+}
+function toneBodyReengage(d){
+if(d.id === 'C-005') return `The technical bar isn't the issue. The hiring manager round surfaced some patterns around ownership and peer dynamics that we'd need to see differently before this team would be the right fit. I'd want to see clear examples of failures owned end-to-end, and a more peer-coaching disposition, before reopening the conversation.`;
+if(d.id === 'C-004') return `Your trajectory is genuinely promising — strong fundamentals, real customer-first instincts, and the hiring manager actively wanted to revisit you. The gap is system design depth at the senior bar (distributed-systems tradeoffs, partitioning, failure-mode reasoning). Twelve to eighteen months of focused work on harder systems problems and I think we'd be having a different conversation.`;
+if(d.id === 'C-006') return `You're close. API design, compliance work, and team fit all came through strongly. The decisive gap was system design depth at scale — the kind that comes from owning a few high-traffic systems end-to-end. That's a real path forward.`;
+if(d.id === 'C-009') return `EM-track candidates with your background are exactly who I want to stay in touch with. The two specific gaps to close: (1) closer-to-the-code technical credibility, ideally with some recent IC contribution; (2) a stronger inventory of specific leadership stories you can recall under pressure.`;
+if(d.id === 'C-010') return `This was a scope-fit decision, not a capability one. If we open a smaller EM seat or you grow into a 10+ scope at Calabrio, please ping me directly.`;
+return `The panel respects what you brought; the gap is specific and addressable.`;
+}
+
+function subjectFor(cid){
+return `Update on your ${rejData[cid].role} application at Northwind Analytics`;
+}
+
+let curId = null;
+let curTone = 'warm';
+let curMode = 'decline'; // 'decline' or 'forward'
+let originalDraft = '';
+
+const modal = document.getElementById('rejModal');
+const evidenceEl = document.getElementById('rejEvidence');
+const biasWarnEl = document.getElementById('rejBiasWarn');
+const toBox = document.getElementById('rejTo');
+const subjectBox = document.getElementById('rejSubject');
+const bodyBox = document.getElementById('rejBody');
+const wordCountEl = document.getElementById('rejWordCount');
+const groundingCountEl = document.getElementById('rejGroundingCount');
+const editedFlagEl = document.getElementById('rejEditedFlag');
+const confirmEl = document.getElementById('rejConfirm');
+const sendBtn = document.getElementById('rejSend');
+const spinner = document.getElementById('rejSpinner');
+const candNameEl = document.getElementById('rejCandName');
+const scCountEl = document.getElementById('rejScCount');
+
+window.openRejectEmail = function(cid){
+curId = cid;
+curTone = 'warm';
+curMode = 'decline';
+const d = rejData[cid];
+if(!d){ console.warn('No reject data for', cid); return; }
+d.id = cid;
+// Update modal header for decline mode
+const headerTitle = document.querySelector('.rej-h-title');
+const headerSub = document.querySelector('.rej-h-sub');
+if(headerTitle) headerTitle.innerHTML = `<span style="color:#7c3aed">👎 Decline email</span> · <span id="rejCandName">${d.name}</span>`;
+if(headerSub) headerSub.textContent = 'Personalized rejection grounded in scorecard evidence · Cap 4';
+// Show tone selector and bias warn for decline mode
+const toneRow = document.querySelector(".rej-toolbar");
+if(toneRow) toneRow.style.display = '';
+candNameEl.textContent = d.name;
+scCountEl.textContent = d.evidence.length;
+toBox.value = `${d.name} <${d.email}>`;
+subjectBox.value = subjectFor(cid);
+document.querySelectorAll('.rej-tone').forEach(t => t.classList.toggle('active', t.dataset.tone === 'warm'));
+
+// Render evidence panel
+const cited = d.evidence.filter(e => e.cited).length;
+groundingCountEl.textContent = cited;
+let evHtml = `<div class="rej-ev-h"><span style="font-size:14px">✨</span> Evidence Sidekick used</div>`;
+if(d.biasWarn){
+evHtml += `<div class="rej-bias-warn"><b>⚠ Bias-prevention notice</b>R1 and R2 use vague descriptors ("culture fit", "didn't gel") with no behavior cited. Sidekick has <b>excluded these from the email</b> and grounded the rationale in R3 (Patricia), which is concrete and defensible. Recruiter check: do not add the R1/R2 phrasing back in.</div>`;
+}
+d.evidence.forEach(e => {
+const cls = e.flagged ? 'flagged' : (e.cited ? 'cited' : '');
+evHtml += `<div class="rej-ev-card ${cls}">
+<div class="rej-ev-tag">${e.round}${e.cited ? '<span class="pill pill-blue">cited</span>' : (e.flagged ? '<span class="pill pill-red">excluded</span>' : '<span class="pill pill-gray">context</span>')}</div>
+<div class="rej-ev-quote">${e.quote}</div>
+${e.flag ? `<div class="rej-ev-meta" style="color:#b91c1c">⚠ ${e.flag}</div>` : ''}
+${e.cited ? `<div class="rej-ev-cite">↳ Used in email body</div>` : ''}
+</div>`;
+});
+evHtml += `<div style="margin-top:14px;padding:10px 12px;background:#f5f3ff;border-radius:7px;font-size:11.5px;color:#5b21b6;line-height:1.5"><b style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">Sidekick pattern read</b>${d.patterns}</div>`;
+if(d.biasWarn){
+biasWarnEl.innerHTML = `<div class="rej-bias-warn" style="margin-bottom:0"><b>⚠ Recruiter check before sending</b>This email is grounded in R3 only. Do <b>not</b> add R1/R2 language ("culture fit", "didn't gel", "personality off") — those phrases are vague and increase legal risk on a decline. The R3 evidence is specific and defensible.</div>`;
+} else {
+biasWarnEl.innerHTML = '';
+}
+evidenceEl.innerHTML = evHtml;
+
+// Initial draft — show modal first with placeholder, then call API
+originalDraft = '';
+bodyBox.value = 'Drafting with Claude…';
+updateWordCount();
+editedFlagEl.style.display = 'none';
+confirmEl.checked = false;
+sendBtn.disabled = true;
+modal.classList.add('open');
+// Trigger real generation
+regenerate();
+};
+
+// ============================================================
+// FORWARD EMAIL — 👍 Move forward flow per Cap 1 skill spec
+// Reuses the same modal · live Claude API · grounded in panel strongest-moment
+// ============================================================
+window.openForwardEmail = function(cid){
+curId = cid;
+curTone = 'warm';
+curMode = 'forward';
+const d = forwardData[cid];
+if(!d){ console.warn('No forward data for', cid); return; }
+d.id = cid;
+// Update modal header for forward mode
+const headerTitle = document.querySelector('.rej-h-title');
+const headerSub = document.querySelector('.rej-h-sub');
+if(headerTitle) headerTitle.innerHTML = `<span style="color:#10b981">👍 Move-forward email</span> · <span id="rejCandName">${d.name}</span>`;
+if(headerSub) headerSub.textContent = 'Personalized forward email grounded in panel strongest-moment · Cap 4';
+// Hide tone selector for forward (single warm tone) — recruiter doesn't need brief/reengage variants when advancing
+const toneRow = document.querySelector(".rej-toolbar");
+if(toneRow) toneRow.style.display = 'none';
+candNameEl.textContent = d.name;
+scCountEl.textContent = '3';
+toBox.value = `${d.name} <${d.email}>`;
+subjectBox.value = `Next steps on your ${d.role} interview at Northwind`;
+
+// Render evidence panel — strongest-moment + panel mood + next step
+groundingCountEl.textContent = '1';
+let evHtml = `<div class="rej-ev-h"><span style="font-size:14px">✨</span> What Sidekick is grounding the email in</div>`;
+evHtml += `<div class="rej-ev-card cited" style="border-left-color:#10b981">
+<div class="rej-ev-tag" style="color:#065f46">Strongest moment <span class="pill pill-green">cited</span></div>
+<div class="rej-ev-quote">${d.strongestMoment}</div>
+<div class="rej-ev-cite">↳ Anchors the opening of the email body</div>
+</div>`;
+evHtml += `<div class="rej-ev-card">
+<div class="rej-ev-tag">Panel consensus <span class="pill pill-gray">context</span></div>
+<div class="rej-ev-quote">${d.panelMood}</div>
+</div>`;
+evHtml += `<div class="rej-ev-card cited" style="border-left-color:#10b981">
+<div class="rej-ev-tag" style="color:#065f46">Next step <span class="pill pill-green">cited</span></div>
+<div class="rej-ev-quote">${d.nextStep}</div>
+<div class="rej-ev-cite">↳ Stated in sentence 2 of the email</div>
+</div>`;
+evHtml += `<div style="margin-top:14px;padding:10px 12px;background:#ecfdf5;border-radius:7px;font-size:11.5px;color:#065f46;line-height:1.5"><b style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px">Sidekick pattern read</b>${d.patterns}</div>`;
+biasWarnEl.innerHTML = '';
+evidenceEl.innerHTML = evHtml;
+
+originalDraft = '';
+bodyBox.value = 'Drafting with Claude…';
+updateWordCount();
+editedFlagEl.style.display = 'none';
+confirmEl.checked = false;
+sendBtn.disabled = true;
+modal.classList.add('open');
+regenerate();
+};
+
+function buildPrompt(d, tone){
+// FORWARD MODE — completely different prompt for "moving forward" emails
+if(curMode === 'forward'){
+return `You are drafting a "moving forward" email on behalf of Maya Linden, a senior recruiter at Northwind Analytics, to a candidate the panel wants to advance.
+
+CANDIDATE: ${d.name} (first name: ${d.firstName})
+ROLE: ${d.role}
+BACKGROUND: ${d.headline}
+
+PANEL'S STRONGEST-MOMENT OBSERVATION (cite this concretely in sentence 1):
+"${d.strongestMoment}"
+
+PANEL CONSENSUS:
+${d.panelMood}
+
+NEXT STEP THE EMAIL MUST CONVEY (state in sentence 2):
+${d.nextStep}
+
+TIMELINE TO COMMIT TO:
+${d.timeline}
+
+INTERNAL PATTERN READ (do NOT quote — for context only):
+${d.patterns}
+
+WRITE THE EMAIL FOLLOWING THESE RULES:
+- Open with one specific moment from the panel's strongest-moment observation. Be concrete — reference the actual interviewer name and what specifically impressed them. No generic praise.
+- Sentence 2 must clearly state the next step. Don't bury it.
+- Sentence 3-4: name what specifically excited the panel (one concrete thing, not "your background was impressive").
+- Close with the timeline so they know exactly when to expect the next contact.
+- 5 to 7 sentences. No more.
+- Sound like a human wrote it. Contractions are fine. Warm but not gushing.
+- Do NOT start with "I appreciate your time" or "Thank you for your interest" or "We are delighted".
+- Do NOT use the word "fit" — it's vague.
+- Do NOT mention Sidekick or that this was AI-drafted.
+- Greet with "Hi ${d.firstName},"
+- Sign with "Maya Linden\\nSenior Recruiter, Northwind Analytics"
+- Output ONLY the email body. No subject line. No commentary.`;
+}
+
+// DECLINE MODE — existing prompt path
+const toneInstructions = {
+warm: "Tone: warm, specific, human. Length: 130-180 words. Acknowledge their effort. Give one paragraph of substantive, specific feedback grounded in the cited evidence below. Be honest but kind. End with whether the door is open for re-engagement.",
+brief: "Tone: brief, professional, respectful of their time. Length: 70-110 words. Lead with the decision, then one sentence naming the specific gap, then one sentence on whether to re-engage. Do not pad.",
+reengage: "Tone: relationship-preserving, talent-pool oriented. Length: 150-200 words. Frame this explicitly as 'not now' rather than 'not ever.' Be specific about what would change the read in 12 months. Offer to set a follow-up reminder. Make it easy for them to opt out of staying in touch."
+};
+
+const evidenceUsable = d.evidence.filter(e => !e.flagged);
+const evidenceExcluded = d.evidence.filter(e => e.flagged);
+
+let evidenceBlock = evidenceUsable.map(e =>
+`- [${e.cited ? 'CITE THIS' : 'context only'}] ${e.round}: "${e.quote}"`
+).join('\n');
+
+let exclusionNote = '';
+if(evidenceExcluded.length > 0){
+exclusionNote = `\n\nIMPORTANT — DO NOT use these scorecard quotes (flagged for vague language by Sidekick's bias review). Do not paraphrase them either:\n${evidenceExcluded.map(e => `- ${e.round}: "${e.quote}" (reason: ${e.flag})`).join('\n')}\n\nGround the rejection rationale ONLY in the usable evidence above. The excluded quotes used trait-only descriptors ("culture fit", "didn't gel", "personality off") with no behavior cited — these create legal risk on a decline. Lean on the concrete behavioral observations only.`;
+}
+
+return `You are drafting a rejection email on behalf of Maya Linden, a senior recruiter at Northwind Analytics, to a candidate who interviewed but won't be moving forward.
+
+CANDIDATE: ${d.name} (first name: ${d.firstName})
+ROLE: ${d.role}
+BACKGROUND: ${d.headline}
+
+PANEL EVIDENCE FROM SCORECARDS:
+${evidenceBlock}${exclusionNote}
+
+SIDEKICK PATTERN READ: ${d.patterns}
+
+RE-ENGAGE STANCE: ${d.reengage ? 'YES — door is open in 12-18 months if specific gap closes.' : 'NO — be respectful but do not promise future engagement.'}
+
+${toneInstructions[tone]}
+
+Write the email body only — no subject line, no signature beyond "Maya Linden\\nSenior Recruiter, Northwind Analytics". Address them by first name. Do not use "Dear" — use "Hi ${d.firstName},". Do not use any vague descriptors. Do not mention Sidekick or that this was AI-drafted. Do not include any meta-commentary, just the email body itself.`;
+}
+
+async function callClaude(d, tone){
+const prompt = buildPrompt(d, tone);
+try {
+const res = await fetch("https://api.anthropic.com/v1/messages", {
+method: "POST",
+headers: { "Content-Type": "application/json" },
+body: JSON.stringify({
+model: "claude-sonnet-4-20250514",
+max_tokens: 1000,
+messages: [{ role: "user", content: prompt }]
+})
+});
+if(!res.ok) throw new Error('API ' + res.status);
+const data = await res.json();
+const text = (data.content || [])
+.filter(b => b.type === 'text')
+.map(b => b.text)
+.join('\n')
+.trim();
+if(!text) throw new Error('empty');
+return { text, source: 'live' };
+} catch(err){
+console.warn('Claude API call failed, falling back to template:', err);
+// Fallback differs by mode — forward uses forwardFallback; decline uses tones[tone]
+if(curMode === 'forward'){
+return { text: forwardFallback(d), source: 'fallback' };
+}
+return { text: tones[tone](d), source: 'fallback' };
+}
+}
+
+// Fallback template for forward emails when API is unreachable
+function forwardFallback(d){
+return `Hi ${d.firstName},\n\nI wanted to reach out personally on what came back from the panel. ${d.strongestMoment.split('.')[0]}. — that moment is the one the team kept coming back to.\n\n${d.nextStep}\n\nThe panel was unanimous, and I want to make sure we move quickly so you have what you need to make a decision. ${d.timeline}\n\nGenuinely looking forward to it.\n\nMaya Linden\nSenior Recruiter, Northwind Analytics`;
+}
+
+function regenerate(){
+if(!curId) return;
+spinner.classList.add('show');
+spinner.querySelector('span').textContent = 'Calling Claude…';
+// Pick the right data source based on mode
+const d = (curMode === 'forward') ? forwardData[curId] : rejData[curId];
+if(!d){ spinner.classList.remove('show'); return; }
+d.id = curId;
+callClaude(d, curTone).then(result => {
+originalDraft = result.text;
+bodyBox.value = originalDraft;
+updateWordCount();
+editedFlagEl.style.display = 'none';
+spinner.classList.remove('show');
+// Update grounding label to show source — accent color matches mode
+const lbl = document.getElementById('rejGroundingCount');
+if(lbl){
+const cited = (curMode === 'forward') ? 2 : d.evidence.filter(e => e.cited && !e.flagged).length;
+lbl.textContent = cited;
+const wrap = lbl.parentElement;
+const accent = (curMode === 'forward') ? '#10b981' : '#7c3aed';
+const groundDesc = (curMode === 'forward') ? 'panel strongest-moment + next-step anchor' : `${cited} cited scorecard quotes`;
+if(result.source === 'live'){
+wrap.innerHTML = `<span style="font-size:14px">✨</span> Live Claude Sonnet draft · grounded in <b style="color:${accent};font-weight:700">${groundDesc}</b> · edit freely below <button class="btn btn-sm" style="margin-left:auto" id="rejRegen">↻ Regenerate</button>`;
+} else {
+wrap.innerHTML = `<span style="font-size:14px">⚠</span> API unreachable — using fallback template (grounded in <b style="color:#b45309;font-weight:700">${groundDesc}</b>) <button class="btn btn-sm" style="margin-left:auto" id="rejRegen">↻ Try again</button>`;
+}
+document.getElementById('rejRegen').addEventListener('click', regenerate);
+}
+});
+}
+
+function updateWordCount(){
+const w = bodyBox.value.trim().split(/\s+/).filter(Boolean).length;
+wordCountEl.textContent = w;
+}
+
+document.getElementById('rejClose').addEventListener('click', () => modal.classList.remove('open'));
+document.getElementById('rejRegen').addEventListener('click', regenerate);
+document.querySelectorAll('.rej-tone').forEach(t => {
+t.addEventListener('click', () => {
+document.querySelectorAll('.rej-tone').forEach(x => x.classList.remove('active'));
+t.classList.add('active');
+curTone = t.dataset.tone;
+regenerate();
+});
+});
+bodyBox.addEventListener('input', () => {
+updateWordCount();
+editedFlagEl.style.display = (bodyBox.value !== originalDraft) ? '' : 'none';
+});
+confirmEl.addEventListener('change', () => {
+sendBtn.disabled = !confirmEl.checked;
+});
+sendBtn.addEventListener('click', () => {
+const d = (curMode === 'forward') ? forwardData[curId] : rejData[curId];
+modal.classList.remove('open');
+const verb = (curMode === 'forward') ? 'Move-forward' : 'Rejection';
+if(typeof showToast === 'function'){
+showToast(`✉ ${verb} email sent to ${d.firstName}. Logged in candidate timeline.`);
+} else {
+const t = document.getElementById('toast');
+const tm = document.getElementById('toastMsg');
+if(t && tm){ tm.textContent = `✉ ${verb} email sent to ${d.firstName}. Logged in candidate timeline.`; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3500); }
+}
+});
+document.getElementById('rejSaveDraft').addEventListener('click', () => {
+modal.classList.remove('open');
+const t = document.getElementById('toast');
+const tm = document.getElementById('toastMsg');
+if(t && tm){ tm.textContent = '💾 Saved as draft. Find it in candidate timeline.'; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'), 3500); }
+});
+})();
+</script>
+</body>
+</html>
